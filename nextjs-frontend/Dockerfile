@@ -20,5 +20,7 @@ COPY . .
 
 EXPOSE 3000
 
-# Start the application
-CMD ["./start.sh"]
+
+
+# Run the application
+CMD ["sh", "-c", "pnpm run dev & node watcher.js & wait"]

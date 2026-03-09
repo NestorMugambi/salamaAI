@@ -18,12 +18,13 @@ def transform_items(items):
     return [ItemRead.model_validate(item) for item in items]
 
 
+
 @router.get("/", response_model=Page[ItemRead])
 async def read_item(
     db: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_active_user),
-    page: int = Query(1, ge=1, description="Page number"),
-    size: int = Query(10, ge=1, le=100, description="Page size"),
+    page: int = Query(1, ge=1, description="Page numbers"),
+    size: int = Query(10, ge=1, le=100, description="Pagesss size"),
 ):
     params = Params(page=page, size=size)
     query = select(Item).filter(Item.user_id == user.id)

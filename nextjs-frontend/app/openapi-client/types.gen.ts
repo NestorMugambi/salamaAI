@@ -749,5 +749,5 @@ export type DeleteItemResponses = {
 };
 
 export type ClientOptions = {
-  baseURL: `${string}://openapi.json` | (string & {});
+  baseURL: `${string}://${string}` | (string & {});
 };

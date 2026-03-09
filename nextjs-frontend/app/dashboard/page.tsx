@@ -47,7 +47,7 @@ export default async function DashboardPage({
       <div className="mb-6">
         <Link href="/dashboard/add-item">
           <Button variant="outline" className="text-lg px-4 py-2">
-            Add New Item
+            Add New Items
           </Button>
         </Link>
       </div>

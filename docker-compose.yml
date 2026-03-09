@@ -15,6 +15,7 @@ services:
       - ./fastapi_backend:/app
       - fastapi-venv:/app/.venv
       - ./local-shared-data:/app/shared-data
+      
     depends_on:
       - db
   db:
@@ -40,6 +41,14 @@ services:
     networks:
       - my_network
     restart: always
+  
+  
+  watcher:
+    build: .
+    container_name: salamaai-watcher
+    command: python /app/watcher.py
+    depends_on:
+      - backend
   frontend:
     build:
       context: ./nextjs-frontend

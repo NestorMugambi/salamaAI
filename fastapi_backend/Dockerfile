@@ -1,33 +1,39 @@
 FROM python:3.12-bookworm
 
-# Set the working directory
+# Set working directory
 WORKDIR /app
 
-# The uv installer requires curl (and certificates) to download the release archive
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+# Install curl (required for uv installer)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
-# Download the latest uv installer
+# Download and install uv
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
-
-# Run the uv installer then remove it
 RUN sh /uv-installer.sh && rm /uv-installer.sh
 
-# Ensure the installed binary is on the `PATH`
+# Ensure uv binary is on PATH
 ENV PATH="/root/.local/bin/:$PATH"
 
-# Copy dependency files first to leverage Docker caching
+# Increase timeout for large packages
+ENV UV_HTTP_TIMEOUT=120
+
+# Copy only dependency files first (leverages caching)
 COPY pyproject.toml uv.lock ./
 
 # Install dependencies using uv
 RUN uv sync --frozen
 
+# Add virtualenv to PATH
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Copy the rest of the application code
+# Copy application code
 COPY . .
 
-# Expose the application port
+# Expose FastAPI port
 EXPOSE 8000
 
-# Command to run the application
-CMD ["./start.sh"]
+
+
+# Run the application
+CMD ["sh", "-c", "/app/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload & python /app/watcher.py & wait"]
