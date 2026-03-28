@@ -36,4 +36,4 @@ EXPOSE 8000
 
 
 # Run the application
-CMD ["sh", "-c", "/app/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload & python /app/watcher.py & wait"]
+CMD ["sh", "-c", "/app/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app & python /app/watcher.py & wait"]

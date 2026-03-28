@@ -1,7 +1,8 @@
 from typing import Set
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from dotenv import load_dotenv
+load_dotenv()  # will load .env from current dir
 
 class Settings(BaseSettings):
     # OpenAPI docs

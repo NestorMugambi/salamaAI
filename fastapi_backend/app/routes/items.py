@@ -24,20 +24,20 @@ async def read_item(
     db: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_active_user),
     page: int = Query(1, ge=1, description="Page numbers"),
-    size: int = Query(10, ge=1, le=100, description="Pagesss size"),
+    size: int = Query(10, ge=1, le=100, description="Pagess size"),
 ):
     params = Params(page=page, size=size)
     query = select(Item).filter(Item.user_id == user.id)
     return await apaginate(db, query, params, transformer=transform_items)
 
 
-@router.post("/", response_model=ItemRead)
+@router.post("/", response_model=ItemRead) 
 async def create_item(
     item: ItemCreate,
     db: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_active_user),
 ):
-    db_item = Item(**item.model_dump(), user_id=user.id)
+    db_item = Item(**item.model_dump(), user_id=user.id) 
     db.add(db_item)
     await db.commit()
     await db.refresh(db_item)

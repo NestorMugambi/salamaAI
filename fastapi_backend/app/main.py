@@ -4,8 +4,13 @@ from .schemas import UserCreate, UserRead, UserUpdate
 from .users import auth_backend, fastapi_users, AUTH_URL_PATH
 from fastapi.middleware.cors import CORSMiddleware
 from .utils import simple_generate_unique_route_id
-from app.routes.items import router as items_router
+
+from .routes.items import router as items_router
+from .health_data.routes import router as health_data_router
+from .prescription.routes import router as prescription_router
+
 from app.config import settings
+
 
 app = FastAPI(
     generate_unique_id_function=simple_generate_unique_route_id,
@@ -49,5 +54,8 @@ app.include_router(
 )
 
 # Include items routes
-app.include_router(items_router, prefix="/items")
+app.include_router(items_router, prefix="/item")
+app.include_router(health_data_router,prefix = "/health_data")
+app.include_router(prescription_router, prefix = "/prescription")
+
 add_pagination(app)
