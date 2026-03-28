@@ -4,7 +4,7 @@ from sqlalchemy import select
 from pydantic import BaseModel
 from typing import Type
 from app.models import BloodPressure,HeartRate
-from .service import BloodPressureService
+#from .service import BloodPressureService
 
 from .schemas import BloodPressureCreate, BloodPressureRead, HeartRateCreate, HeartRateRead
 from app.database import User, get_async_session
