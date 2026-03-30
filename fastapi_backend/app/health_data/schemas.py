@@ -10,8 +10,9 @@ from .enums import (
     BodyPosture,
     MeasurementLocation,
     HeartRateUnit,
-    BloodPressureUnit
+    BloodPressureUnit,
 )
+
 
 # --------------------------
 # Blood Pressure Schemas
@@ -33,7 +34,8 @@ class BloodPressureBase(BaseModel):
     diastolic_value: float = Field(..., ge=30, le=200)
     systolic_unit: BloodPressureUnit = Field(default=BloodPressureUnit.mmHg)
     diastolic_unit: BloodPressureUnit = Field(default=BloodPressureUnit.mmHg)
-    
+
+
 class BloodPressureCreate(BloodPressureBase):
     pass
 
@@ -61,12 +63,13 @@ class HeartRateBase(BaseModel):
     body_posture: Optional[BodyPosture] = None
     measurement_location: Optional[MeasurementLocation] = None
 
+
 class HeartRateCreate(HeartRateBase):
     pass
+
 
 class HeartRateRead(HeartRateCreate):
     id: int
     user_id: UUID
 
-   
     model_config = {"from_attributes": True}

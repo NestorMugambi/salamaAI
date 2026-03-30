@@ -55,7 +55,7 @@ app.include_router(
 
 # Include items routes
 app.include_router(items_router, prefix="/item")
-app.include_router(health_data_router,prefix = "/health_data")
-app.include_router(prescription_router, prefix = "/prescription")
+app.include_router(health_data_router, prefix="/health_data")
+app.include_router(prescription_router, prefix="/prescription")
 
 add_pagination(app)

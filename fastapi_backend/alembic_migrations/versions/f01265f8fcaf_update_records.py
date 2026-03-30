@@ -5,6 +5,7 @@ Revises: 653ff915b0a2
 Create Date: 2026-03-24 02:35:24.124621
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -13,8 +14,8 @@ import fastapi_users_db_sqlalchemy
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'f01265f8fcaf'
-down_revision: Union[str, None] = '653ff915b0a2'
+revision: str = "f01265f8fcaf"
+down_revision: Union[str, None] = "653ff915b0a2"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

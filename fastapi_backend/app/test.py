@@ -3,10 +3,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel
 from typing import Type
-from app.models import BloodPressure,HeartRate
-#from .service import BloodPressureService
+from app.models import BloodPressure, HeartRate
+# from .service import BloodPressureService
 
-from .schemas import BloodPressureCreate, BloodPressureRead, HeartRateCreate, HeartRateRead
+from .schemas import (
+    BloodPressureCreate,
+    BloodPressureRead,
+    HeartRateCreate,
+    HeartRateRead,
+)
 from app.database import User, get_async_session
 from app.users import current_active_user
 
@@ -18,24 +23,22 @@ router = APIRouter(tags=["health_data"])
 # --------------------------
 @router.post("/blood-pressure/", response_model=BloodPressureRead)
 async def create_bp(
-       bp_in: BloodPressureCreate,
-       session: AsyncSession = Depends(get_async_session),
-       user: User = Depends(current_active_user)
-   ):
-       ##print(f"User ID: {user.id}")  # Debugging
-       
-       instance = BloodPressure(
-           user_id=user.id,
-           **bp_in.model_dump(exclude={'user_id'}))
-       ##print(f"Instance user_id: {instance.user_id}")  # Debugging
-       session.add(instance)
-       await session.commit()
-       await session.refresh(instance)
-       return instance
+    bp_in: BloodPressureCreate,
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_active_user),
+):
+    ##print(f"User ID: {user.id}")  # Debugging
+
+    instance = BloodPressure(user_id=user.id, **bp_in.model_dump(exclude={"user_id"}))
+    ##print(f"Instance user_id: {instance.user_id}")  # Debugging
+    session.add(instance)
+    await session.commit()
+    await session.refresh(instance)
+    return instance
 
 
 @router.get("/blood-pressure/", response_model=list[BloodPressureRead])
-async def get_all_bp(session: AsyncSession = Depends(get_async_session)):    
+async def get_all_bp(session: AsyncSession = Depends(get_async_session)):
     result = await session.execute(select(BloodPressure))
     return result.scalars().all()
 
@@ -47,9 +50,9 @@ async def get_all_bp(session: AsyncSession = Depends(get_async_session)):
 async def create_hr(
     hr_in: HeartRateCreate,
     session: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user)
+    user: User = Depends(current_active_user),
 ):
-    instance = HeartRate(**hr_in.model_dump(), user_id = user.id)
+    instance = HeartRate(**hr_in.model_dump(), user_id=user.id)
     session.add(instance)
     await session.commit()
     await session.refresh(instance)

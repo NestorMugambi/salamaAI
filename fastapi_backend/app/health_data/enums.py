@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 # --------------------------
 # General descriptive stats
 # --------------------------
@@ -7,6 +8,7 @@ class DescriptiveStatistic(str, Enum):
     average = "average"
     maximum = "maximum"
     minimum = "minimum"
+
 
 # --------------------------
 # Physical activity
@@ -17,6 +19,7 @@ class TemporalRelationship(str, Enum):
     during_exercise = "during exercise"
     at_rest = "at rest"
 
+
 # --------------------------
 # Sleep
 # --------------------------
@@ -24,6 +27,7 @@ class TemporalRelationshipToSleep(str, Enum):
     before_sleep = "before sleep"
     during_sleep = "during sleep"
     after_sleep = "after sleep"
+
 
 # --------------------------
 # Body posture
@@ -34,6 +38,7 @@ class BodyPosture(str, Enum):
     lying = "lying"
     reclining = "reclining"
 
+
 # --------------------------
 # Measurement locations
 # --------------------------
@@ -43,11 +48,13 @@ class MeasurementLocation(str, Enum):
     left_arm = "left arm"
     right_arm = "right arm"
 
+
 # --------------------------
 # Units
 # --------------------------
 class HeartRateUnit(str, Enum):
     beats_per_min = "beats/min"
+
 
 class BloodPressureUnit(str, Enum):
     mmHg = "mmHg"

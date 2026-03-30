@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 
+
 # Enums
 class AdministrationRoute(str, Enum):
     oral = "oral"
@@ -11,11 +12,13 @@ class AdministrationRoute(str, Enum):
     intramuscular = "intramuscular"
     transdermal = "transdermal"
 
+
 class PartOfDay(str, Enum):
     morning = "morning"
     afternoon = "afternoon"
     evening = "evening"
     night = "night"
+
 
 class DayOfWeek(str, Enum):
     monday = "monday"
@@ -26,6 +29,7 @@ class DayOfWeek(str, Enum):
     saturday = "saturday"
     sunday = "sunday"
 
+
 class TimeUnit(str, Enum):
     min = "min"
     h = "h"
@@ -33,6 +37,7 @@ class TimeUnit(str, Enum):
     wk = "wk"
     Mo = "Mo"
     yr = "yr"
+
 
 # Base Schema (Shared fields)
 class DoseScheduleBase(BaseModel):
@@ -47,21 +52,26 @@ class DoseScheduleBase(BaseModel):
     frequency: Optional[str] = None
     dose_prn_trigger: Optional[str] = None
 
+
 class PrescriptionBase(BaseModel):
     medication_name: str
     route: AdministrationRoute
     prescription_trigger: Optional[str] = None
 
+
 # Create Schema (For POST requests)
 class DoseScheduleCreate(DoseScheduleBase):
     pass
 
+
 class PrescriptionCreate(PrescriptionBase):
     schedule: List[DoseScheduleCreate] = Field(default_factory=list)
+
 
 # Read Schema (For GET responses)
 class DoseScheduleRead(DoseScheduleBase):
     id: int
+
 
 class PrescriptionRead(PrescriptionBase):
     id: int
