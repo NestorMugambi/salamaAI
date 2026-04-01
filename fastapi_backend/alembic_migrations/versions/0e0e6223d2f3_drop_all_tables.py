@@ -21,7 +21,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-
     # Drop tables in reverse dependency order
     op.drop_table("doseschedule")
     op.drop_table("prescription")

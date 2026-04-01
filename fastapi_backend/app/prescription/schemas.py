@@ -1,44 +1,10 @@
-from enum import Enum
+from app.enums import AdministrationRoute, TimeUnit
+
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 import uuid
 from uuid import UUID
-
-
-# Enums
-class AdministrationRoute(str, Enum):
-    oral = "oral"
-    iv = "iv"
-    subcutaneous = "subcutaneous"
-    intramuscular = "intramuscular"
-    transdermal = "transdermal"
-
-
-class PartOfDay(str, Enum):
-    morning = "morning"
-    afternoon = "afternoon"
-    evening = "evening"
-    night = "night"
-
-
-class DayOfWeek(str, Enum):
-    monday = "monday"
-    tuesday = "tuesday"
-    wednesday = "wednesday"
-    thursday = "thursday"
-    friday = "friday"
-    saturday = "saturday"
-    sunday = "sunday"
-
-
-class TimeUnit(str, Enum):
-    min = "min"
-    h = "h"
-    d = "d"
-    wk = "wk"
-    Mo = "Mo"
-    yr = "yr"
 
 
 # Base Schema (Shared fields)

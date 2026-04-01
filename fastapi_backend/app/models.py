@@ -1,5 +1,16 @@
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
-from sqlalchemy import Column, String, Integer, ForeignKey, Float, DateTime, Enum
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    String,
+    Integer,
+    ForeignKey,
+    Float,
+    DateTime,
+    Enum,
+    func,
+)
 from sqlalchemy.orm import DeclarativeBase, relationship
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from uuid import uuid4, UUID
@@ -15,6 +26,9 @@ from .enums import (
     HeartRateUnit,
     BloodPressureUnit,
     AdministrationRoute,
+    Gender,
+    SmokingStatus,
+    AlcoholUse,
 )
 
 
@@ -41,6 +55,53 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     prescriptions = relationship(
         "Prescription", back_populates="user", cascade="all, delete-orphan"
     )
+    profiles = relationship("UserProfile", back_populates="user")
+
+
+# -------------------------
+# User Profile
+# -------------------------
+class UserProfile(Base):
+    __tablename__ = "user_profile"
+
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    first_name = Column(String(50), nullable=False)
+    middle_name = Column(String(50), nullable=True)
+    last_name = Column(String(50), nullable=False)
+    phone_number = Column(String, nullable=True)
+    date_of_birth = Column(Date, nullable=False)
+    sex = Column(Enum(Gender), nullable=False)
+
+    weight = Column(Float, nullable=True)
+    height = Column(Float, nullable=True)
+    bmi = Column(Float, nullable=True)
+
+    smoking = Column(Enum(SmokingStatus), nullable=False, default=False)
+    diabetes = Column(Boolean, nullable=False, default=False)
+
+    history_cvd = Column(
+        Boolean, nullable=False, default=False
+    )  # history of CardioVasclular disease
+    kidney_disease = Column(Boolean, nullable=False, default=False)
+    family_history_htn = Column(Boolean, nullable=True)  # family hypertension history
+
+    on_bp_medication = Column(Boolean, nullable=False, default=False)
+
+    total_cholesterol = Column(Float, nullable=True)
+    hdl_cholesterol = Column(Float, nullable=True)  # High density liproprotein level
+    glucose = Column(Float, nullable=True)
+
+    physical_activity_level = Column(String, nullable=True)
+    diet_quality = Column(String, nullable=True)
+    alcohol_use = Column(Enum(AlcoholUse), nullable=True)
+    stress_level = Column(String, nullable=True)
+    sleep_quality = Column(String, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+    user = relationship("User", back_populates="profiles")
 
 
 # --------------------------

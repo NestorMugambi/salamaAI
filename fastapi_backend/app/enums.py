@@ -95,3 +95,23 @@ class TimeUnit(str, Enum):
     wk = "wk"
     Mo = "Mo"
     yr = "yr"
+
+
+class Gender(str, Enum):
+    male = "male"
+    female = "female"
+    other = "other"
+
+
+class SmokingStatus(str, Enum):
+    never = "never"
+    former = "former"
+    passive = "passive"
+    current_light = "current_light"
+    current_heavy = "current_heavy"
+
+
+class AlcoholUse(str, Enum):
+    none = "none"
+    moderate = "moderate"
+    heavy = "heavy"
