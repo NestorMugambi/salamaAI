@@ -76,7 +76,7 @@ class UserProfileService:
             return None
 
         # Fields that cannot be updated
-        protected_fields = {"email", "sex", "date_of_birth"}
+        protected_fields = {"email", "sex", "date_of_birth","first_name","middle_name","last_name"}
 
         # Get update data excluding protected fields
         update_data = {
