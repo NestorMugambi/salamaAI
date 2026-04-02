@@ -1,10 +1,7 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from pydantic import BaseModel
-from typing import Optional, Type
-from app.models import BloodPressure, HeartRate
+from typing import Optional
 from .service import BloodPressureService, HeartRateService
 
 from .schemas import (

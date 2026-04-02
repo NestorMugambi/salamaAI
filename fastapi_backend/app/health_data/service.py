@@ -1,9 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select
 from typing import Type, TypeVar, Generic, Optional, List
 from pydantic import BaseModel
 from fastapi import HTTPException, status
-from datetime import datetime
 from app.models import BloodPressure, HeartRate
 from .schemas import BloodPressureCreate, HeartRateCreate
 

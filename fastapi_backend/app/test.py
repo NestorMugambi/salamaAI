@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from pydantic import BaseModel
-from typing import Type
 from app.models import BloodPressure, HeartRate
 # from .service import BloodPressureService
 

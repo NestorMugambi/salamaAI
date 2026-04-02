@@ -13,9 +13,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, relationship
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from uuid import uuid4, UUID
-from typing import Optional, List
-from datetime import datetime
+from uuid import uuid4
 
 from .enums import (
     DescriptiveStatistic,
@@ -64,7 +62,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
 class UserProfile(Base):
     __tablename__ = "user_profile"
 
-    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4, unique=True)
     first_name = Column(String(50), nullable=False)
     middle_name = Column(String(50), nullable=True)
     last_name = Column(String(50), nullable=False)

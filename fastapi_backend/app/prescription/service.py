@@ -1,10 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from app.models import Prescription, DoseSchedule
 
-from fastapi import HTTPException, status
 from .schemas import PrescriptionCreate, PrescriptionRead, DoseScheduleRead
 
 

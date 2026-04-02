@@ -9,13 +9,16 @@ from app.models import UserProfile
 from .schemas import UserProfileCreate, UserProfileRead, UserProfileUpdate
 from app.utils import calculate_age
 
+from sqlalchemy.exc import IntegrityError
+from fastapi import HTTPException, status
+
 
 class UserProfileService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
     # -----------------------------
-    # CREATE PROFILE
+    # Create PROFILE
     # -----------------------------
     async def create_profile(self, profile_data: UserProfileCreate) -> UserProfileRead:
         # First get the user to ensure it exists
@@ -25,12 +28,33 @@ class UserProfileService:
         user = user_result.scalars().first()
 
         if not user:
-            raise ValueError("User not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            )
+
+        # Check if the user already has a profile
+        profile_result = await self.session.execute(
+            select(UserProfile).where(UserProfile.user_id == profile_data.user_id)
+        )
+        existing_profile = profile_result.scalars().first()
+
+        if existing_profile:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User already has a profile",
+            )
 
         # Create profile
         user_profile = UserProfile(**profile_data.model_dump())
         self.session.add(user_profile)
-        await self.session.commit()
+
+        try:
+            await self.session.commit()
+        except IntegrityError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Profile creation failed due to a database constraint",
+            )
 
         # Refresh and explicitly load the user relationship
         await self.session.refresh(user_profile)
@@ -76,7 +100,14 @@ class UserProfileService:
             return None
 
         # Fields that cannot be updated
-        protected_fields = {"email", "sex", "date_of_birth","first_name","middle_name","last_name"}
+        protected_fields = {
+            "email",
+            "sex",
+            "date_of_birth",
+            "first_name",
+            "middle_name",
+            "last_name",
+        }
 
         # Get update data excluding protected fields
         update_data = {
@@ -95,22 +126,6 @@ class UserProfileService:
         # Refresh to get updated values
         await self.session.refresh(profile)
         return await self.to_read_schema(profile)
-
-    # -----------------------------
-    # DELETE PROFILE
-    # -----------------------------
-    async def delete_profile(self, user_id: UUID) -> bool:
-        result = await self.session.execute(
-            select(UserProfile).where(UserProfile.user_id == user_id)
-        )
-
-        profile = result.scalars().first()
-        if not profile:
-            return False
-
-        await self.session.delete(profile)
-        await self.session.commit()
-        return True
 
     # -----------------------------
     # DELETE PROFILE
