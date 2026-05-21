@@ -10,14 +10,19 @@ from app.models import (
     HealthAssessment,
     HeartRate,
 )
+from app.utils import compute_bmi, compute_log_bmi
 from .schemas import (
     BloodPressureCreate,
     HealthAssessmentCreate,
     HeartRateCreate,
 )
 
+import math
+
 T = TypeVar("T")
 S = TypeVar("S", bound=BaseModel)
+
+
 
 
 class GenericService(Generic[T, S]):
@@ -47,21 +52,34 @@ class GenericService(Generic[T, S]):
         Create a new record.
         If creating a HealthAssessment, it fetches the latest BloodPressure 
         and HeartRate records for the user from the DB and associates them.
+        BMI and log_bmi are automatically computed if weight and height are provided.
         """
 
         if self.model == HealthAssessment:
-            # 1. Create the assessment record with provided payload
+            # Convert data to dict for manipulation
+            dump = data.model_dump()
+
+            # Calculate BMI and log_bmi if weight and height are available
+            weight = dump.get("weight")
+            height = dump.get("height")
+            if weight is not None and height is not None:
+                dump["bmi"] = compute_bmi(weight, height)
+                dump["log_bmi"] = compute_log_bmi(dump["bmi"])
+            else:
+                # Explicitly set to None if not calculable
+                dump["bmi"] = None
+                dump["log_bmi"] = None
+
+            # 1. Create the assessment record
             record = HealthAssessment(
                 user_id=user_id,
-                **data.model_dump(),
+                **dump,
                 **kwargs,
             )
             self.session.add(record)
-            
-            # Flush so PostgreSQL generates the UUID 'id' for HealthAssessment
             await self.session.flush()
 
-            # 2. Fetch the latest BloodPressure record for this user
+            # 2. Link latest BloodPressure
             bp_query = (
                 select(BloodPressure)
                 .where(BloodPressure.user_id == user_id)
@@ -70,13 +88,11 @@ class GenericService(Generic[T, S]):
             )
             bp_result = await self.session.execute(bp_query)
             latest_bp = bp_result.scalar_one_or_none()
-
             if latest_bp:
-                # Link the existing latest BP to this health assessment
                 latest_bp.assessment_id = record.id
                 self.session.add(latest_bp)
 
-            # 3. Fetch the latest HeartRate record for this user
+            # 3. Link latest HeartRate
             hr_query = (
                 select(HeartRate)
                 .where(HeartRate.user_id == user_id)
@@ -85,14 +101,12 @@ class GenericService(Generic[T, S]):
             )
             hr_result = await self.session.execute(hr_query)
             latest_hr = hr_result.scalar_one_or_none()
-
             if latest_hr:
-                # Link the existing latest HR to this health assessment
                 latest_hr.assessment_id = record.id
                 self.session.add(latest_hr)
 
         else:
-            # Standard creation flow for BloodPressure or HeartRate
+            # Standard creation flow
             record = self.model(
                 user_id=user_id,
                 **data.model_dump(),
@@ -102,7 +116,7 @@ class GenericService(Generic[T, S]):
 
         await self.session.commit()
 
-        # Refresh so returned object includes populated relationships
+        # Refresh with relationships
         if self.model == HealthAssessment:
             await self.session.refresh(
                 record,

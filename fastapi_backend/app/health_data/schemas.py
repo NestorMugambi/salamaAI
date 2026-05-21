@@ -171,8 +171,7 @@ class HealthAssessmentBase(BaseModel):
     # -------------------------
     weight: Optional[float] = None
     height: Optional[float] = None
-    bmi: Optional[float] = None
-    log_bmi: Optional[float] = None
+
 
     # -------------------------
     # Current Clinical Data
@@ -208,12 +207,17 @@ class HealthAssessmentCreate(HealthAssessmentBase):
 
 
 class HealthAssessmentRead(HealthAssessmentBase):
-    id: UUID
-    user_id: UUID
-
     # Only read schema keeps the related measurements
     blood_pressures: list[BloodPressureValueRead] = []
     heart_rates: list[HeartRateValueRead] = []
+    
+    bmi: Optional[float] = None
+    log_bmi: Optional[float] = None
+    
+    id: UUID
+    user_id: UUID
+
+
 
     model_config = {
         "from_attributes": True
