@@ -1,43 +1,78 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from uuid import UUID
-from app.enums import Gender, SmokingStatus, AlcoholUse
+from app.enums import EducationLevel, Gender, PhysicalActivity, SmokingStatus, AlcoholUse
 from datetime import datetime, date
 
 
 class UserProfileBase(BaseModel):
-    date_of_birth: date
-    sex: Gender
+        # Personal Information
+    # -------------------------
+
+
     first_name: str
-    middle_name: str
+
+    middle_name: Optional[str] = None
+
     last_name: str
-
-    weight: Optional[float] = None
-    height: Optional[float] = None
-    bmi: Optional[float] = None
-
-    smoking: SmokingStatus
-    diabetes: bool = False
-
-    history_cvd: bool = False
-    kidney_disease: bool = False
-    family_history_htn: Optional[bool] = None
-
-    on_bp_medication: bool = False
-
-    total_cholesterol: Optional[float] = None
-    hdl_cholesterol: Optional[float] = None
-    glucose: Optional[float] = None
-
-    physical_activity_level: Optional[str] = None
-    diet_quality: Optional[str] = None
-    alcohol_use: AlcoholUse
-    stress_level: Optional[str] = None
-    sleep_quality: Optional[str] = None
 
     phone_number: Optional[str] = None
 
+    date_of_birth: date
 
+    sex: Gender
+
+    work_type: Optional[str] = None
+
+    education: EducationLevel
+
+    # -------------------------
+    # Chronic Medical History
+    # -------------------------
+    diabetes: bool = False
+
+    heart_disease: bool = False
+
+    history_cvd: bool = False
+
+    kidney_disease: bool = False
+
+    prevalent_stroke: bool = False
+
+    prevalent_hypertension: bool = False
+
+    family_history_htn: Optional[bool] = None
+
+    family_history_cvd: Optional[bool] = None
+
+    # -------------------------
+    # Lifestyle Baseline
+    # -------------------------
+    smoking: SmokingStatus
+
+    cigs_per_day: Optional[int] = None
+
+    alcohol_use: Optional[AlcoholUse] = None
+
+    physical_activity_level: Optional[
+        PhysicalActivity
+    ] = None
+
+    exercise_frequency: Optional[str] = None
+
+    diet_quality: Optional[str] = None
+
+    salt_intake: Optional[float] = None
+
+    stress_score: Optional[int] = None
+
+    sleep_duration: Optional[float] = None
+
+    sleep_quality: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+    
 class UserProfileCreate(UserProfileBase):
     user_id: UUID
 
@@ -55,9 +90,7 @@ class UserProfileRead(UserProfileBase):
 
 
 class UserProfileUpdate(BaseModel):
-    weight: Optional[float] = None
-    height: Optional[float] = None
-    bmi: Optional[float] = None
+
 
     smoking: SmokingStatus
     diabetes: Optional[bool] = None

@@ -2,11 +2,13 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
-from .service import BloodPressureService, HeartRateService
+from .service import BloodPressureService, HealthAssessmentService, HeartRateService
 
 from .schemas import (
     BloodPressureCreate,
     BloodPressureRead,
+    HealthAssessmentCreate,
+    HealthAssessmentRead,
     HeartRateCreate,
     HeartRateRead,
 )
@@ -140,6 +142,60 @@ async def delete_hr(
     """Delete a heart rate record."""
     service = HeartRateService(session)
     success = await service.delete_record(hr_id, user.id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Record not found")
+    return {"message": "Record deleted"}
+
+# ==============================================
+# Health Assessment Routes
+# ==============================================
+
+@router.post("/health-assessment/", response_model=HealthAssessmentRead)
+async def create_health_assessment(
+    data: HealthAssessmentCreate,
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_active_user),
+):
+    """Create a new health assessment record."""
+    service = HealthAssessmentService(session)
+    return await service.create_record(user.id, data)
+
+
+@router.get("/health-assessment/{assessment_id}", response_model=HealthAssessmentRead)
+async def get_health_assessment(
+    assessment_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_active_user),
+):
+    """Fetch a single health assessment record by ID."""
+    service = HealthAssessmentService(session)
+    record = await service.get_record(assessment_id, user.id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Record not found")
+    return record
+
+
+@router.get("/health-assessment/", response_model=list[HealthAssessmentRead])
+async def get_all_health_assessments(
+    limit: int = Query(100, ge=1),
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_active_user),
+):
+    """Fetch all health assessment records for the current user."""
+    service = HealthAssessmentService(session)
+    records = await service.get_user_records(user.id, limit)
+    return records
+
+
+@router.delete("/health-assessment/{assessment_id}")
+async def delete_health_assessment(
+    assessment_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_active_user),
+):
+    """Delete a health assessment record."""
+    service = HealthAssessmentService(session)
+    success = await service.delete_record(assessment_id, user.id)
     if not success:
         raise HTTPException(status_code=404, detail="Record not found")
     return {"message": "Record deleted"}

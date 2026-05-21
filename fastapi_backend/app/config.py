@@ -9,6 +9,8 @@ load_dotenv()  # will load .env from current dir
 class Settings(BaseSettings):
     # OpenAPI docs
     OPENAPI_URL: str = "/openapi.json"
+    
+
 
     # Database
     DATABASE_URL: str
