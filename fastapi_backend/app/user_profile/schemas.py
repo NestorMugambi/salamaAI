@@ -1,14 +1,20 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from uuid import UUID
-from app.enums import EducationLevel, Gender, PhysicalActivity, SmokingStatus, AlcoholUse
+from app.enums import (
+    EducationLevel,
+    Gender,
+    PhysicalActivity,
+    SmokingStatus,
+    AlcoholUse,
+    BpHistory,
+)
 from datetime import datetime, date
 
 
 class UserProfileBase(BaseModel):
-        # Personal Information
+    # Personal Information
     # -------------------------
-
 
     first_name: str
 
@@ -40,6 +46,7 @@ class UserProfileBase(BaseModel):
     prevalent_stroke: bool = False
 
     prevalent_hypertension: bool = False
+    bp_history: BpHistory
 
     family_history_htn: Optional[bool] = None
 
@@ -54,9 +61,7 @@ class UserProfileBase(BaseModel):
 
     alcohol_use: Optional[AlcoholUse] = None
 
-    physical_activity_level: Optional[
-        PhysicalActivity
-    ] = None
+    physical_activity_level: Optional[PhysicalActivity] = None
 
     exercise_frequency: Optional[str] = None
 
@@ -72,7 +77,8 @@ class UserProfileBase(BaseModel):
 
     class Config:
         from_attributes = True
-    
+
+
 class UserProfileCreate(UserProfileBase):
     user_id: UUID
 
@@ -90,8 +96,6 @@ class UserProfileRead(UserProfileBase):
 
 
 class UserProfileUpdate(BaseModel):
-
-
     smoking: SmokingStatus
     diabetes: Optional[bool] = None
 

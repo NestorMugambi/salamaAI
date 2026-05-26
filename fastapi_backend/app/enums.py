@@ -116,26 +116,44 @@ class AlcoholUse(str, Enum):
     moderate = "moderate"
     heavy = "heavy"
 
+
 class DiseaseType(str, Enum):
     CHD = "CHD"
     STROKE = "STROKE"
     HYPERTENSION = "HYPERTENSION"
     CVD = "CVD"
-    
+
+
 class RiskLevel(str, Enum):
     LOW = "LOW"
     MODERATE = "MODERATE"
     HIGH = "HIGH"
     CRITICAL = "CRITICAL"
-    
+
+
 class EducationLevel(str, Enum):
     PRIMARY = "primary"
     HIGH_SCHOOL = "high_school"
     UNDERGRAD = "undergraduate"
     GRADUATE = "graduate"
-    
+
+
 class PhysicalActivity(str, Enum):
-    NONE = "none",
-    LOW = "low",
-    MODERATE = "moderate",
+    NONE = ("none",)
+    LOW = ("low",)
+    MODERATE = ("moderate",)
     HIGH = "high"
+
+
+class BpHistory(str, Enum):
+    NORMAL = ("normal",)
+    PREHYPERTENSION = ("prehypertension",)
+    HYPERTENSION = "hypertension"
+
+
+class BpMedication(str, Enum):
+    NONE = ("none",)
+    BETA_BLOCKER = ("beta_blocker",)
+    DIURETIC = ("diuretic",)
+    ACE_INHIBITOR = ("ace_inhibitor",)
+    OTHER = "other"

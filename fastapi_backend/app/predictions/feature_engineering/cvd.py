@@ -7,14 +7,27 @@ from app.utils import calculate_age
 
 # ── Feature Sequence Signature Expected by xgbcvdv1.joblib ───────────────────
 EXPECTED_FEATURES = [
-    "age", "gender", "height", "weight", "ap_hi", "ap_lo", "cholesterol", "gluc",
-    "smoke", "alco", "active", "bmi", "pulse_pressure", "log_bmi"
+    "age",
+    "gender",
+    "height",
+    "weight",
+    "ap_hi",
+    "ap_lo",
+    "cholesterol",
+    "gluc",
+    "smoke",
+    "alco",
+    "active",
+    "bmi",
+    "pulse_pressure",
+    "log_bmi",
 ]
 
 
 # ── Encoding helpers ──────────────────────────────────────────────────────────
 
-def _safe_float(value: Any, default: float = float('nan')) -> float:
+
+def _safe_float(value: Any, default: float = float("nan")) -> float:
     try:
         v = float(value)
         return v if math.isfinite(v) else default
@@ -31,7 +44,7 @@ def _enum_val(field: Any) -> str | None:
     """
     if field is None:
         return None
-    if hasattr(field, "value"):          # Enum member
+    if hasattr(field, "value"):  # Enum member
         return str(field.value).strip().lower()
     return str(field).strip().lower()
 
@@ -40,7 +53,7 @@ def _gender_to_binary(sex: Any) -> float:
     """Gender enum / string → 0 = Female, 1 = Male."""
     s = _enum_val(sex)
     if s is None:
-        return float('nan')
+        return float("nan")
     return 1.0 if s in {"male", "m"} else 0.0
 
 
@@ -52,7 +65,7 @@ def _smoke_to_binary(smoking_status: Any) -> float:
     """
     s = _enum_val(smoking_status)
     if s is None:
-        return float('nan')
+        return float("nan")
     return 1.0 if s in {"passive", "current_light", "current_heavy"} else 0.0
 
 
@@ -64,7 +77,7 @@ def _alcohol_to_binary(alcohol_use: Any) -> float:
     """
     s = _enum_val(alcohol_use)
     if s is None:
-        return float('nan')
+        return float("nan")
     return 1.0 if s in {"moderate", "heavy"} else 0.0
 
 
@@ -76,14 +89,14 @@ def _activity_to_binary(activity_level: Any) -> float:
     """
     s = _enum_val(activity_level)
     if s is None:
-        return float('nan')
+        return float("nan")
     return 1.0 if s in {"moderate", "high"} else 0.0
 
 
 def _glucose_to_category(glucose_mgdl: float) -> float:
     """Continuous mg/dL → ordinal 1/2/3."""
     if math.isnan(glucose_mgdl):
-        return float('nan')
+        return float("nan")
     if glucose_mgdl < 100:
         return 1.0
     if glucose_mgdl < 126:
@@ -94,7 +107,7 @@ def _glucose_to_category(glucose_mgdl: float) -> float:
 def _cholesterol_to_category(chol_mgdl: float) -> float:
     """Continuous mg/dL → ordinal 1/2/3."""
     if math.isnan(chol_mgdl):
-        return float('nan')
+        return float("nan")
     if chol_mgdl < 200:
         return 1.0
     if chol_mgdl < 240:
@@ -104,9 +117,14 @@ def _cholesterol_to_category(chol_mgdl: float) -> float:
 
 def _compute_bmi(weight_kg: float, height_m: float) -> float:
     """height must be in metres (as stored in DB)."""
-    if math.isnan(height_m) or math.isnan(weight_kg) or height_m <= 0.0 or weight_kg <= 0.0:
-        return float('nan')
-    return weight_kg / (height_m ** 2)
+    if (
+        math.isnan(height_m)
+        or math.isnan(weight_kg)
+        or height_m <= 0.0
+        or weight_kg <= 0.0
+    ):
+        return float("nan")
+    return weight_kg / (height_m**2)
 
 
 def _latest_bp(blood_pressures: Any) -> tuple[float, float]:
@@ -118,7 +136,7 @@ def _latest_bp(blood_pressures: Any) -> tuple[float, float]:
     Falls back to list order if the attribute is missing.
     """
     if not blood_pressures:
-        return float('nan'), float('nan')
+        return float("nan"), float("nan")
 
     try:
         ordered = sorted(
@@ -130,15 +148,16 @@ def _latest_bp(blood_pressures: Any) -> tuple[float, float]:
         ordered = list(blood_pressures)
 
     if not ordered:
-        return float('nan'), float('nan')
+        return float("nan"), float("nan")
 
-    latest    = ordered[0]
-    systolic  = _safe_float(getattr(latest, "systolic_value",  None))
+    latest = ordered[0]
+    systolic = _safe_float(getattr(latest, "systolic_value", None))
     diastolic = _safe_float(getattr(latest, "diastolic_value", None))
     return systolic, diastolic
 
 
 # ── Feature engineer ──────────────────────────────────────────────────────────
+
 
 def engineer_cvd_features(profile, assessment) -> dict[str, float]:
     """
@@ -150,15 +169,15 @@ def engineer_cvd_features(profile, assessment) -> dict[str, float]:
     """
 
     # ── Demographics ──────────────────────────────────────────────────────────
-    age    = float(calculate_age(profile.date_of_birth))
+    age = float(calculate_age(profile.date_of_birth))
     gender = _gender_to_binary(profile.sex)
 
     # ── Anthropometrics (direct columns on HealthAssessment) ──────────────────
-    height_m = _safe_float(assessment.height)   # Keep raw meters for BMI conversion
-    weight   = _safe_float(assessment.weight)   # kg
-    
+    height_m = _safe_float(assessment.height)  # Keep raw meters for BMI conversion
+    weight = _safe_float(assessment.weight)  # kg
+
     # Preprocess height to centimeters (cm) for the model's feature payload
-    height_cm = height_m * 100.0 if not math.isnan(height_m) else float('nan')
+    height_cm = height_m * 100.0 if not math.isnan(height_m) else float("nan")
 
     # ── Blood pressure (eagerly-loaded relationship) ───────────────────────────
     # blood_pressures is a list; we want the most recent reading.
@@ -166,11 +185,11 @@ def engineer_cvd_features(profile, assessment) -> dict[str, float]:
 
     # ── Labs (direct columns) ─────────────────────────────────────────────────
     cholesterol = _cholesterol_to_category(_safe_float(assessment.total_cholesterol))
-    gluc        = _glucose_to_category(_safe_float(assessment.glucose))
+    gluc = _glucose_to_category(_safe_float(assessment.glucose))
 
     # ── Lifestyle (Enum columns directly on HealthAssessment) ─────────────────
-    smoke  = _smoke_to_binary(assessment.smoking_status)
-    alco   = _alcohol_to_binary(assessment.alcohol_use)
+    smoke = _smoke_to_binary(assessment.smoking_status)
+    alco = _alcohol_to_binary(assessment.alcohol_use)
     active = _activity_to_binary(assessment.physical_activity_level)
 
     # ── BMI (stored or derived) ───────────────────────────────────────────────
@@ -179,22 +198,24 @@ def engineer_cvd_features(profile, assessment) -> dict[str, float]:
         bmi = _compute_bmi(weight, height_m)  # Must use meters here
 
     # ── Derived features ──────────────────────────────────────────────────────
-    pulse_pressure = ap_hi - ap_lo if not (math.isnan(ap_hi) or math.isnan(ap_lo)) else float('nan')
-    log_bmi        = math.log(bmi) if (not math.isnan(bmi) and bmi > 0.0) else float('nan')
+    pulse_pressure = (
+        ap_hi - ap_lo if not (math.isnan(ap_hi) or math.isnan(ap_lo)) else float("nan")
+    )
+    log_bmi = math.log(bmi) if (not math.isnan(bmi) and bmi > 0.0) else float("nan")
 
     return {
-        "age":            age,
-        "gender":         gender,
-        "height":         height_cm,
-        "weight":         weight,
-        "ap_hi":          ap_hi,
-        "ap_lo":          ap_lo,
-        "cholesterol":    cholesterol,
-        "gluc":           gluc,
-        "smoke":          smoke,
-        "alco":           alco,
-        "active":         active,
-        "bmi":            bmi,
+        "age": age,
+        "gender": gender,
+        "height": height_cm,
+        "weight": weight,
+        "ap_hi": ap_hi,
+        "ap_lo": ap_lo,
+        "cholesterol": cholesterol,
+        "gluc": gluc,
+        "smoke": smoke,
+        "alco": alco,
+        "active": active,
+        "bmi": bmi,
         "pulse_pressure": pulse_pressure,
-        "log_bmi":        log_bmi,
+        "log_bmi": log_bmi,
     }

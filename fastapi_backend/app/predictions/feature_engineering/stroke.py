@@ -12,13 +12,19 @@ from app.utils import calculate_age
 
 # ── Feature Sequence Signature Expected by xgbstrokev2.joblib ────────────────
 EXPECTED_FEATURES = [
-    "gender", "age", "hypertension", "heart_disease", "work_type", 
-    "avg_glucose_level", "bmi"
+    "gender",
+    "age",
+    "hypertension",
+    "heart_disease",
+    "work_type",
+    "avg_glucose_level",
+    "bmi",
 ]
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _safe_float(value: Any, default: float = float('nan')) -> float:
+
+def _safe_float(value: Any, default: float = float("nan")) -> float:
     try:
         v = float(value)
         return v if math.isfinite(v) else default
@@ -35,7 +41,7 @@ def _enum_val(field: Any) -> str | None:
     """
     if field is None:
         return None
-    if hasattr(field, "value"):          # Enum member
+    if hasattr(field, "value"):  # Enum member
         return str(field.value).strip().lower()
     return str(field).strip().lower()
 
@@ -67,12 +73,17 @@ def _to_binary(value: Any) -> float:
     if isinstance(value, (int, float)):
         return float(bool(value))
 
-    return 1.0 if str(value).strip().lower() in {
-        "yes",
-        "true",
-        "1",
-        "y",
-    } else 0.0
+    return (
+        1.0
+        if str(value).strip().lower()
+        in {
+            "yes",
+            "true",
+            "1",
+            "y",
+        }
+        else 0.0
+    )
 
 
 # ── Work-type encoding ────────────────────────────────────────────────────────
@@ -102,14 +113,20 @@ def _encode_work_type(work_type: Any) -> float:
 
 
 def _compute_bmi(weight_kg: float, height_cm: float) -> float:
-    if math.isnan(height_cm) or math.isnan(weight_kg) or height_cm <= 0 or weight_kg <= 0:
-        return float('nan')
-    
+    if (
+        math.isnan(height_cm)
+        or math.isnan(weight_kg)
+        or height_cm <= 0
+        or weight_kg <= 0
+    ):
+        return float("nan")
+
     height_m = height_cm / 100.0
-    return weight_kg / (height_m ** 2)
+    return weight_kg / (height_m**2)
 
 
 # ── Feature engineering ───────────────────────────────────────────────────────
+
 
 def engineer_stroke_features(
     profile: UserProfile,
@@ -122,7 +139,7 @@ def engineer_stroke_features(
     age = float(calculate_age(profile.date_of_birth))
     hypertension = _to_binary(getattr(profile, "prevalent_hypertension", None))
     heart_disease = _to_binary(getattr(profile, "heart_disease", None))
-    
+
     work_type = _encode_work_type(getattr(profile, "work_type", None))
 
     # Continuous glucose level (uses nan as fallback over dangerous 0.0)
@@ -132,9 +149,15 @@ def engineer_stroke_features(
     bmi = _safe_float(getattr(assessment, "bmi", None))
 
     if math.isnan(bmi) or bmi == 0.0:
-        height_val = _safe_float(getattr(profile, "height", None) or getattr(assessment, "height", float('nan')))
-        weight_val = _safe_float(getattr(profile, "weight", None) or getattr(assessment, "weight", float('nan')))
-        
+        height_val = _safe_float(
+            getattr(profile, "height", None)
+            or getattr(assessment, "height", float("nan"))
+        )
+        weight_val = _safe_float(
+            getattr(profile, "weight", None)
+            or getattr(assessment, "weight", float("nan"))
+        )
+
         # Guard Check: Convert raw DB meters (e.g. 1.75) to explicit cm if required by _compute_bmi
         if not math.isnan(height_val) and height_val < 3.0:
             height_val = height_val * 100.0
@@ -142,11 +165,11 @@ def engineer_stroke_features(
         bmi = _compute_bmi(weight_val, height_val)
 
     return {
-        "gender":            gender,
-        "age":               age,
-        "hypertension":      hypertension,
-        "heart_disease":     heart_disease,
-        "work_type":         work_type,
+        "gender": gender,
+        "age": age,
+        "hypertension": hypertension,
+        "heart_disease": heart_disease,
+        "work_type": work_type,
         "avg_glucose_level": avg_glucose_level,
-        "bmi":               bmi,
+        "bmi": bmi,
     }

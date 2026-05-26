@@ -63,7 +63,7 @@ async def run_risk_predictions(
         user_id=user.id,
         predicted_at=datetime.now(timezone.utc),
         results=results,
-        errors=errors,   # partial failures included transparently
+        errors=errors,  # partial failures included transparently
     )
 
 

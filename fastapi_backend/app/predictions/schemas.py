@@ -6,8 +6,10 @@ from uuid import UUID
 
 # ─── Request Schemas ──────────────────────────────────────────────────────────
 
+
 class PredictionRequest(BaseModel):
     """Trigger predictions for one or all diseases for the current user."""
+
     diseases: Optional[list[str]] = Field(
         default=None,
         description="Subset of ['cvd', 'hyp', 'chd', 'stroke']. None = run all.",
@@ -15,6 +17,7 @@ class PredictionRequest(BaseModel):
 
 
 # ─── Individual Result Schemas ────────────────────────────────────────────────
+
 
 class DiseasePredictionResult(BaseModel):
     disease: str
@@ -26,8 +29,11 @@ class DiseasePredictionResult(BaseModel):
 
 class PredictionError(BaseModel):
     """Details of a per-disease failure — returned alongside partial results."""
+
     disease: str
-    stage: str = Field(description="'feature_engineering' | 'model_load' | 'inference' | 'persistence'")
+    stage: str = Field(
+        description="'feature_engineering' | 'model_load' | 'inference' | 'persistence'"
+    )
     error: str
     features_used: Optional[dict[str, Any]] = None
 
@@ -43,6 +49,7 @@ class PredictionResponse(BaseModel):
 
 
 # ─── Stored Result Read Schema ─────────────────────────────────────────────────
+
 
 class RiskAssessmentResultRead(BaseModel):
     id: UUID

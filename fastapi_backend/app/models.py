@@ -18,6 +18,8 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import DeclarativeBase, relationship
 
 from .enums import (
+    BpHistory,
+    BpMedication,
     DescriptiveStatistic,
     TemporalRelationship,
     TemporalRelationshipToSleep,
@@ -32,7 +34,7 @@ from .enums import (
     DiseaseType,
     RiskLevel,
     EducationLevel,
-    PhysicalActivity
+    PhysicalActivity,
 )
 
 
@@ -120,10 +122,7 @@ class UserProfile(Base):
 
     work_type = Column(String, nullable=True)
 
-    education = Column(
-        Enum(EducationLevel),
-        nullable=False
-    )
+    education = Column(Enum(EducationLevel), nullable=False)
 
     # -------------------------
     # Chronic Medical History
@@ -139,6 +138,7 @@ class UserProfile(Base):
     prevalent_stroke = Column(Boolean, nullable=False, default=False)
 
     prevalent_hypertension = Column(Boolean, nullable=False, default=False)
+    bp_history = Column(Enum(BpHistory), nullable=False, default=False)
 
     family_history_htn = Column(Boolean, nullable=True)
 
@@ -265,6 +265,9 @@ class HealthAssessment(Base):
         nullable=False,
         default=False,
     )
+    bp_medication_type = Column(
+        Enum(BpMedication), nullable=False, default=BpMedication.NONE
+    )
 
     # -------------------------
     # Lifestyle Snapshot
@@ -273,6 +276,7 @@ class HealthAssessment(Base):
         Enum(SmokingStatus),
         nullable=True,
     )
+    cigs_per_day = Column(Integer, nullable=True)
 
     alcohol_use = Column(
         Enum(AlcoholUse),
@@ -317,7 +321,6 @@ class HealthAssessment(Base):
         back_populates="assessment",
         cascade="all, delete-orphan",
     )
-
 
 
 # =========================================================
@@ -601,7 +604,7 @@ class DoseSchedule(Base):
         "Prescription",
         back_populates="schedules",
     )
-    
+
 
 # =========================================================
 # Risk Assessment Result
@@ -754,10 +757,10 @@ class RiskAssessmentResult(Base):
     profile = relationship("UserProfile")
 
     assessment = relationship("HealthAssessment")
-    
+
     user = relationship(
-    "User",
-    back_populates="risk_assessment_results",
+        "User",
+        back_populates="risk_assessment_results",
     )
 
     profile = relationship(

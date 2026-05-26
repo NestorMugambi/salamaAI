@@ -146,9 +146,11 @@ async def delete_hr(
         raise HTTPException(status_code=404, detail="Record not found")
     return {"message": "Record deleted"}
 
+
 # ==============================================
 # Health Assessment Routes
 # ==============================================
+
 
 @router.post("/health-assessment/", response_model=HealthAssessmentRead)
 async def create_health_assessment(

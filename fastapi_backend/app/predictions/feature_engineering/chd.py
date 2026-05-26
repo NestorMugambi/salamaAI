@@ -10,7 +10,28 @@ from typing import Any
 from app.models import HealthAssessment, UserProfile
 from app.utils import calculate_age
 
+# ── Feature Layout Signature ──────────────────────────────────────────────────
+# This list preserves the exact column sequence expected by chdscalerv1.joblib
+# and chdriskv1.joblib. Do not alter this order!
+CHD_FEATURE_ORDER: list[str] = [
+    "age",
+    "education",
+    "sex",
+    "cigsPerDay",
+    "BPMeds",
+    "prevalentStroke",
+    "prevalentHyp",
+    "diabetes",
+    "totChol",
+    "sysBP",
+    "diaBP",
+    "BMI",
+    "heartRate",
+    "glucose",
+]
+
 # ── Encoding helpers ──────────────────────────────────────────────────────────
+
 
 def _safe_float(value: Any, default: float = 0.0) -> float:
     try:
@@ -18,6 +39,22 @@ def _safe_float(value: Any, default: float = 0.0) -> float:
         return v if math.isfinite(v) else default
     except (TypeError, ValueError):
         return default
+
+
+def _enum_val(field: Any) -> str | None:
+    """
+    Safely extract string value from:
+      - Enum member -> field.value
+      - plain string
+      - None
+    """
+    if field is None:
+        return None
+
+    if hasattr(field, "value"):
+        return str(field.value).strip().lower()
+
+    return str(field).strip().lower()
 
 
 def _sex_to_binary(sex: Any) -> int:
@@ -28,10 +65,10 @@ def _sex_to_binary(sex: Any) -> int:
     Female -> 0
     """
 
-    if sex is None:
-        return 0
+    s = _enum_val(sex)
 
-    s = str(sex).strip().lower()
+    if s is None:
+        return 0
 
     return 1 if s in {"male", "m", "1"} else 0
 
@@ -63,18 +100,40 @@ def _to_binary(
     return 1 if str(value).strip().lower() in truthy else 0
 
 
+def _smoke_to_binary(smoking_status: Any) -> float:
+    """
+    SmokingStatus enum → binary.
+
+    passive / current_light / current_heavy → 1
+    never / former                          → 0
+    """
+
+    s = _enum_val(smoking_status)
+
+    if s is None:
+        return 0.0
+
+    return (
+        1.0
+        if s
+        in {
+            "passive",
+            "current_light",
+            "current_heavy",
+        }
+        else 0.0
+    )
+
+
 # ── Education encoding ────────────────────────────────────────────────────────
 # MUST match training preprocessing exactly
 
 _EDUCATION_MAP: dict[str, float] = {
     "primary": 1.0,
-
     "high_school": 2.0,
     "high school": 2.0,
-
     "undergraduate": 3.0,
     "undergrad": 3.0,
-
     "graduate": 4.0,
 }
 
@@ -87,12 +146,82 @@ def _encode_education(education: Any) -> float:
     if education is None:
         return 1.0
 
-    s = str(education).strip().lower()
+    s = _enum_val(education)
+
+    if s is None:
+        return 1.0
 
     return _EDUCATION_MAP.get(s, 1.0)
 
 
+# ── Relationship helpers ──────────────────────────────────────────────────────
+
+
+def _latest_bp(blood_pressures: Any) -> tuple[float, float]:
+    """
+    Returns latest systolic and diastolic values.
+    """
+
+    if not blood_pressures:
+        return float("nan"), float("nan")
+
+    try:
+        ordered = sorted(
+            blood_pressures,
+            key=lambda bp: bp.start_date_time,
+            reverse=True,
+        )
+    except (AttributeError, TypeError):
+        ordered = list(blood_pressures)
+
+    if not ordered:
+        return float("nan"), float("nan")
+
+    latest = ordered[0]
+
+    systolic = _safe_float(
+        getattr(latest, "systolic_value", None),
+        default=float("nan"),
+    )
+
+    diastolic = _safe_float(
+        getattr(latest, "diastolic_value", None),
+        default=float("nan"),
+    )
+
+    return systolic, diastolic
+
+
+def _latest_heart_rate(heart_rates: Any) -> float:
+    """
+    Returns latest heart rate value.
+    """
+
+    if not heart_rates:
+        return float("nan")
+
+    try:
+        ordered = sorted(
+            heart_rates,
+            key=lambda hr: hr.start_date_time,
+            reverse=True,
+        )
+    except (AttributeError, TypeError):
+        ordered = list(heart_rates)
+
+    if not ordered:
+        return float("nan")
+
+    latest = ordered[0]
+
+    return _safe_float(
+        getattr(latest, "value", None),
+        default=float("nan"),
+    )
+
+
 # ── Feature engineering ───────────────────────────────────────────────────────
+
 
 def engineer_chd_features(
     profile: UserProfile,
@@ -104,87 +233,61 @@ def engineer_chd_features(
 
     # ── Demographics ─────────────────────────────────────────────────────────
 
-    age = float(
-      calculate_age(profile.date_of_birth)
-    )
+    age = float(calculate_age(profile.date_of_birth))
 
-    education = float(
-        _encode_education(
-            getattr(profile, "education", None)
-        )
-    )
+    education = _safe_float(_encode_education(getattr(profile, "education", None)))
 
-    sex = float(
-        _sex_to_binary(profile.sex)
-    )
+    sex = float(_sex_to_binary(profile.sex))
 
     # ── Lifestyle ────────────────────────────────────────────────────────────
 
-    # Continuous float feature
+    smoking_binary = _smoke_to_binary(assessment.smoking_status)
+
+    # Dataset expects float
     cigs_per_day = _safe_float(
-        profile.cigs_per_day,
+        getattr(profile, "cigs_per_day", 0),
         default=0.0,
     )
 
+    # If non-smoker, enforce 0 cigarettes/day
+    if smoking_binary == 0.0:
+        cigs_per_day = 0.0
+
     # ── Medical history ──────────────────────────────────────────────────────
 
-    # Dataset expects float values
     bp_meds = _safe_float(
         assessment.on_bp_medication,
         default=0.0,
     )
 
-    prevalent_stroke = float(
-        _to_binary(
-            profile.prevalent_stroke
-        )
-    )
+    prevalent_stroke = float(_to_binary(profile.prevalent_stroke))
 
-    prevalent_hyp = float(
-        _to_binary(
-            profile.prevalent_hypertension
-        )
-    )
+    prevalent_hyp = float(_to_binary(profile.prevalent_hypertension))
 
-    diabetes = float(
-        _to_binary(
-            profile.diabetes
-        )
-    )
+    diabetes = float(_to_binary(profile.diabetes))
 
     # ── Clinical measurements ────────────────────────────────────────────────
 
     tot_chol = _safe_float(
-        assessment.total_cholesterol
+        assessment.total_cholesterol,
+        default=float("nan"),
     )
 
-    latest_bp = (
-        assessment.blood_pressures[-1]
-        if assessment.blood_pressures
-        else None
-    )
-
-    sys_bp = _safe_float(
-        latest_bp.systolic_value if latest_bp else None
-    )
-
-    dia_bp = _safe_float(
-        latest_bp.diastolic_value if latest_bp else None
-    )
+    sys_bp, dia_bp = _latest_bp(assessment.blood_pressures)
 
     bmi = _safe_float(
-        assessment.bmi
+        assessment.bmi,
+        default=float("nan"),
     )
 
-    heart_rate = _safe_float(
-        assessment.heart_rates.value
-    )
+    heart_rate = _latest_heart_rate(assessment.heart_rates)
 
-    # Continuous glucose value
     glucose = _safe_float(
-        assessment.glucose
+        assessment.glucose,
+        default=float("nan"),
     )
 
+    # Generated using the exact sequence configuration defined in CHD_FEATURE_ORDER
     return {
         "age": age,
         "education": education,

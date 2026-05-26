@@ -23,8 +23,6 @@ T = TypeVar("T")
 S = TypeVar("S", bound=BaseModel)
 
 
-
-
 class GenericService(Generic[T, S]):
     """
     Generic async CRUD service.
@@ -50,7 +48,7 @@ class GenericService(Generic[T, S]):
     ) -> T:
         """
         Create a new record.
-        If creating a HealthAssessment, it fetches the latest BloodPressure 
+        If creating a HealthAssessment, it fetches the latest BloodPressure
         and HeartRate records for the user from the DB and associates them.
         BMI and log_bmi are automatically computed if weight and height are provided.
         """
@@ -140,7 +138,6 @@ class GenericService(Generic[T, S]):
         record_id: int,
         user_id: str,
     ) -> Optional[T]:
-
         query = (
             select(self.model)
             .where(self.model.id == record_id)
@@ -166,12 +163,7 @@ class GenericService(Generic[T, S]):
         user_id: str,
         limit: int = 100,
     ) -> List[T]:
-
-        query = (
-            select(self.model)
-            .where(self.model.user_id == user_id)
-            .limit(limit)
-        )
+        query = select(self.model).where(self.model.user_id == user_id).limit(limit)
 
         if self.model == HealthAssessment:
             query = query.options(
@@ -191,7 +183,6 @@ class GenericService(Generic[T, S]):
         self,
         limit: int = 100,
     ) -> List[T]:
-
         query = select(self.model).limit(limit)
 
         if self.model == HealthAssessment:
@@ -213,7 +204,6 @@ class GenericService(Generic[T, S]):
         record_id: int,
         user_id: str,
     ) -> bool:
-
         record = await self.get_record(record_id, user_id)
 
         if not record:
@@ -231,6 +221,7 @@ class GenericService(Generic[T, S]):
 # Blood Pressure Service
 # =========================================================
 
+
 class BloodPressureService(GenericService[BloodPressure, BloodPressureCreate]):
     def __init__(self, session: AsyncSession):
         super().__init__(session, BloodPressure)
@@ -240,6 +231,7 @@ class BloodPressureService(GenericService[BloodPressure, BloodPressureCreate]):
 # Heart Rate Service
 # =========================================================
 
+
 class HeartRateService(GenericService[HeartRate, HeartRateCreate]):
     def __init__(self, session: AsyncSession):
         super().__init__(session, HeartRate)
@@ -248,6 +240,7 @@ class HeartRateService(GenericService[HeartRate, HeartRateCreate]):
 # =========================================================
 # Health Assessment Service
 # =========================================================
+
 
 class HealthAssessmentService(GenericService[HealthAssessment, HealthAssessmentCreate]):
     def __init__(self, session: AsyncSession):

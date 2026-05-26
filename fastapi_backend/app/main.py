@@ -60,6 +60,6 @@ app.include_router(
 app.include_router(health_data_router, prefix="/health_data")
 app.include_router(prescription_router, prefix="/prescription")
 app.include_router(profile_router, prefix="/profile")
-app.include_router(predictions_router,prefix="/predictions")
+app.include_router(predictions_router, prefix="/predictions")
 
 add_pagination(app)

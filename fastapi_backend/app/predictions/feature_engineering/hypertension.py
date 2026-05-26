@@ -1,18 +1,14 @@
 """
 predictions/feature_engineering/hyp.py
 
-Features expected by xgbhypertension.joblib
+Features expected by xgbhypertensionv1.joblib
 ──────────────────────────────────────────────────────────────────────────────
 Age | Salt_Intake | Stress_Score | BP_History | Sleep_Duration | BMI
 Medication | Family_History | Exercise_Level | Smoking_Status
 ──────────────────────────────────────────────────────────────────────────────
 Notes
-- Medication       → binary: 0 = None/No, 1 = any medication present
-- Exercise_Level   → binary: 0 = inactive/low, 1 = active  (matches 'active'
-                     in CVD dataset so models share the same semantics)
-- Smoking_Status   → binary: 0 = non-smoker, 1 = smoker
-- BP_History       → binary: 0 = No, 1 = Yes
-- Family_History   → binary: 0 = No, 1 = Yes
+- Outputs structured types (floats or un-encoded raw uppercase strings) 
+  to align with dynamic scikit-learn ColumnTransformer configurations.
 """
 
 from __future__ import annotations
@@ -20,12 +16,27 @@ from __future__ import annotations
 import math
 from typing import Any
 
-from app.models import HealthAssessment, UserProfile
+from app.utils import calculate_age
+
+# ── Feature Sequence Signature Expected by xgbhypertensionv1.joblib ─────────
+EXPECTED_FEATURES = [
+    "Age",
+    "Salt_Intake",
+    "Stress_Score",
+    "BP_History",
+    "Sleep_Duration",
+    "BMI",
+    "Medication",
+    "Family_History",
+    "Exercise_Level",
+    "Smoking_Status",
+]
 
 
 # ── Encoding helpers ──────────────────────────────────────────────────────────
 
-def _safe_float(value: Any, default: float = 0.0) -> float:
+
+def _safe_float(value: Any, default: float = float("nan")) -> float:
     try:
         v = float(value)
         return v if math.isfinite(v) else default
@@ -33,94 +44,92 @@ def _safe_float(value: Any, default: float = 0.0) -> float:
         return default
 
 
-def _medication_to_binary(medication: Any) -> int:
+def _enum_val_raw(field: Any) -> str:
     """
-    'None', None, '', 'no', 'false' → 0
-    Any actual medication name / 'yes' / '1'  → 1
+    Safely extract uppercase string values from:
+      - SQLAlchemy Enum instances → field.value
+      - Plain strings
+    Defaults cleanly to "NONE" to maintain strict OneHotEncoder alignment.
     """
-    if medication is None:
-        return 0
-    s = str(medication).strip().lower()
-    if s in {"none", "no", "false", "0", ""}:
-        return 0
-    return 1
+    if field is None:
+        return "NONE"
+
+    if hasattr(field, "value"):  # Enum member
+        s = str(field.value).strip().upper()
+    else:
+        s = str(field).strip().upper()
+
+    return s if s not in {"", "NAN", "NAT", "FALSE"} else "NONE"
 
 
-def _exercise_to_binary(exercise_level: Any) -> int:
-    """
-    Maps free-text exercise levels to the same binary used by CVD's 'active'.
-      Active / High / Moderate  → 1
-      Low / Sedentary / None    → 0
-    """
-    if exercise_level is None:
-        return 0
-    s = str(exercise_level).strip().lower()
-    active_values = {"active", "high", "moderate", "yes", "1", "true", "medium"}
-    return 1 if s in active_values else 0
+def _clean_bp_history(bp_history: Any) -> str:
+    """Standardizes incoming blood pressure categories into explicit Enum strings."""
+    s = _enum_val_raw(bp_history)
+    if s in {"NO", "0"}:
+        return "NORMAL"
+    if s in {"YES", "1", "TRUE"}:
+        return "HYPERTENSION"
+    return s
 
 
-def _smoking_to_binary(smoking_status: Any) -> int:
-    """
-    'current', 'smoker', 'yes', '1' → 1
-    'never', 'former', 'no', '0'    → 0
-    """
-    if smoking_status is None:
-        return 0
-    s = str(smoking_status).strip().lower()
-    smoker_values = {"current", "smoker", "yes", "1", "true", "current smoker"}
-    return 1 if s in smoker_values else 0
+def _clean_exercise(exercise_level: Any) -> str:
+    """Maps custom physical tracking inputs to expected string categories."""
+    s = _enum_val_raw(exercise_level)
+    if s in {"1", "TRUE", "Y", "YES", "ACTIVE"}:
+        return "MODERATE"
+    if s in {"0", "FALSE", "N", "NO", "SEDENTARY"}:
+        return "NONE"
+    return s
 
 
-def _to_binary(value: Any) -> int:
+def _clean_binary_string(value: Any) -> str:
+    """Converts general truthy/falsy flags into explicit YES/NO string keys."""
     if value is None:
-        return 0
+        return "NO"
     if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, (int, float)):
-        return int(bool(value))
-    return 1 if str(value).strip().lower() in {"yes", "true", "1", "y"} else 0
+        return "YES" if value else "NO"
+
+    s = str(value).strip().upper()
+    if s in {"YES", "TRUE", "1", "Y", "HYPERTENSION"}:
+        return "YES"
+    return "NO"
 
 
 # ── Feature engineer ──────────────────────────────────────────────────────────
 
-def engineer_hyp_features(
-    profile: UserProfile,
-    assessment: HealthAssessment,
-) -> dict[str, float]:
+
+def engineer_hyp_features(profile: Any, assessment: Any) -> dict[str, float | str]:
     """
-    Build the feature dict consumed by xgbhypertension.joblib.
+    Build the feature dict consumed by xgbhypertensionv1.joblib.
 
-    Parameters
-    ----------
-    profile    : UserProfile ORM object
-    assessment : HealthAssessment ORM object (latest reading)
-
-    Returns
-    -------
-    Ordered dict matching model training column order.
+    Accepts UserProfile and HealthAssessment ORM objects (or their flat service
+    equivalents). Numerical values are prepared as floats, and nominal variables
+    are structured as uppercase string keys for the pipeline's OneHotEncoder.
     """
 
-    age            = _safe_float(profile.age)
-    salt_intake    = _safe_float(assessment.salt_intake)
-    stress_score   = _safe_float(assessment.stress_score)
-    bp_history     = float(_to_binary(assessment.bp_history))
-    sleep_duration = _safe_float(assessment.sleep_duration)
-    bmi            = _safe_float(assessment.bmi)
+    # ── Numerical Features (StandardScaler Layer) ───────────────────────────
+    age = float(calculate_age(profile.date_of_birth))
+    salt_intake = _safe_float(profile.salt_intake)
+    stress_score = _safe_float(profile.stress_score)
+    sleep_duration = _safe_float(profile.sleep_duration)
+    bmi = _safe_float(assessment.bmi)
 
-    # Binary-encoded fields
-    medication      = float(_medication_to_binary(assessment.medication))
-    family_history  = float(_to_binary(profile.family_history_hypertension))
-    exercise_level  = float(_exercise_to_binary(assessment.exercise_level))
-    smoking_status  = float(_smoking_to_binary(assessment.smoking_status))
+    # ── Categorical Features (OneHotEncoder Layer) ──────────────────────────
+    medication = _enum_val_raw(assessment.bp_medication_type)
+    smoking_status = _enum_val_raw(assessment.smoking_status)
+
+    bp_history = _clean_bp_history(profile.bp_history)
+    exercise_level = _clean_exercise(profile.physical_activity_level)
+    family_history = _clean_binary_string(profile.family_history_htn)
 
     return {
-        "Age":            age,
-        "Salt_Intake":    salt_intake,
-        "Stress_Score":   stress_score,
-        "BP_History":     bp_history,
+        "Age": age,
+        "Salt_Intake": salt_intake,
+        "Stress_Score": stress_score,
+        "BP_History": bp_history,
         "Sleep_Duration": sleep_duration,
-        "BMI":            bmi,
-        "Medication":     medication,
+        "BMI": bmi,
+        "Medication": medication,
         "Family_History": family_history,
         "Exercise_Level": exercise_level,
         "Smoking_Status": smoking_status,

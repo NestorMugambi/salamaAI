@@ -14,6 +14,7 @@ from app.enums import (
     MeasurementLocation,
     HeartRateUnit,
     BloodPressureUnit,
+    BpMedication,
 )
 
 
@@ -21,30 +22,20 @@ from app.enums import (
 # Blood Pressure Schemas
 # =========================================================
 
-class BloodPressureBase(BaseModel):
 
+class BloodPressureBase(BaseModel):
     start_date_time: datetime
     end_date_time: Optional[datetime] = None
 
-    descriptive_statistic: Optional[
-        DescriptiveStatistic
-    ] = None
+    descriptive_statistic: Optional[DescriptiveStatistic] = None
 
-    temporal_relationship_to_physical_activity: Optional[
-        TemporalRelationship
-    ] = None
+    temporal_relationship_to_physical_activity: Optional[TemporalRelationship] = None
 
-    temporal_relationship_to_sleep: Optional[
-        TemporalRelationshipToSleep
-    ] = None
+    temporal_relationship_to_sleep: Optional[TemporalRelationshipToSleep] = None
 
-    body_posture: Optional[
-        BodyPosture
-    ] = None
+    body_posture: Optional[BodyPosture] = None
 
-    measurement_location: Optional[
-        MeasurementLocation
-    ] = None
+    measurement_location: Optional[MeasurementLocation] = None
 
     systolic_value: float = Field(
         ...,
@@ -58,13 +49,9 @@ class BloodPressureBase(BaseModel):
         le=200,
     )
 
-    systolic_unit: BloodPressureUnit = Field(
-        default=BloodPressureUnit.mmHg
-    )
+    systolic_unit: BloodPressureUnit = Field(default=BloodPressureUnit.mmHg)
 
-    diastolic_unit: BloodPressureUnit = Field(
-        default=BloodPressureUnit.mmHg
-    )
+    diastolic_unit: BloodPressureUnit = Field(default=BloodPressureUnit.mmHg)
 
 
 class BloodPressureCreate(BloodPressureBase):
@@ -75,65 +62,48 @@ class BloodPressureRead(BloodPressureBase):
     id: int
     user_id: UUID
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 # =========================================================
 # Minimal BP Schema for HealthAssessment nesting
 # =========================================================
 
+
 class BloodPressureValueRead(BaseModel):
     systolic_value: float
     diastolic_value: float
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 # =========================================================
 # Heart Rate Schemas
 # =========================================================
 
-class HeartRateBase(BaseModel):
 
+class HeartRateBase(BaseModel):
     value: float = Field(
         ...,
         ge=20,
         le=300,
     )
 
-    unit: HeartRateUnit = Field(
-        default=HeartRateUnit.beats_per_min
-    )
+    unit: HeartRateUnit = Field(default=HeartRateUnit.beats_per_min)
 
     start_date_time: datetime
 
-    end_date_time: Optional[
-        datetime
-    ] = None
+    end_date_time: Optional[datetime] = None
 
-    descriptive_statistic: Optional[
-        DescriptiveStatistic
-    ] = None
+    descriptive_statistic: Optional[DescriptiveStatistic] = None
 
-    temporal_relationship_to_physical_activity: Optional[
-        TemporalRelationship
-    ] = None
+    temporal_relationship_to_physical_activity: Optional[TemporalRelationship] = None
 
-    temporal_relationship_to_sleep: Optional[
-        TemporalRelationshipToSleep
-    ] = None
+    temporal_relationship_to_sleep: Optional[TemporalRelationshipToSleep] = None
 
-    body_posture: Optional[
-        BodyPosture
-    ] = None
+    body_posture: Optional[BodyPosture] = None
 
-    measurement_location: Optional[
-        MeasurementLocation
-    ] = None
+    measurement_location: Optional[MeasurementLocation] = None
 
 
 class HeartRateCreate(HeartRateBase):
@@ -144,34 +114,29 @@ class HeartRateRead(HeartRateCreate):
     id: int
     user_id: UUID
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 # =========================================================
 # Minimal Heart Rate Schema for HealthAssessment nesting
 # =========================================================
 
+
 class HeartRateValueRead(BaseModel):
     value: float
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 # =========================================================
 # Health Assessment Schemas
 # =========================================================
 class HealthAssessmentBase(BaseModel):
-
     # -------------------------
     # Anthropometric Measurements
     # -------------------------
     weight: Optional[float] = None
     height: Optional[float] = None
-
 
     # -------------------------
     # Current Clinical Data
@@ -181,25 +146,25 @@ class HealthAssessmentBase(BaseModel):
     total_cholesterol: Optional[float] = None
     hdl_cholesterol: Optional[float] = None
     on_bp_medication: bool = False
+    bp_medication_type: BpMedication
 
     # -------------------------
     # Lifestyle Snapshot
     # -------------------------
     smoking_status: Optional[SmokingStatus] = None
+    cigs_per_day: Optional[int] = None
     alcohol_use: Optional[AlcoholUse] = None
     physical_activity_level: Optional[PhysicalActivity] = None
-    
-    #blood_pressures: list[BloodPressureValueRead] = []
-    #heart_rates: list[HeartRateValueRead] = []
+
+    # blood_pressures: list[BloodPressureValueRead] = []
+    # heart_rates: list[HeartRateValueRead] = []
 
     # -------------------------
     # Notes / Metadata
     # -------------------------
     assessment_notes: Optional[str] = None
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 class HealthAssessmentCreate(HealthAssessmentBase):
@@ -210,15 +175,11 @@ class HealthAssessmentRead(HealthAssessmentBase):
     # Only read schema keeps the related measurements
     blood_pressures: list[BloodPressureValueRead] = []
     heart_rates: list[HeartRateValueRead] = []
-    
+
     bmi: Optional[float] = None
     log_bmi: Optional[float] = None
-    
+
     id: UUID
     user_id: UUID
 
-
-
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
