@@ -56,6 +56,7 @@ class RiskAssessmentResultRead(BaseModel):
     user_id: UUID
     disease: str
     risk_score: float
+    risk_percentage: float
     risk_label: str
     model_version: str
     predicted_at: datetime

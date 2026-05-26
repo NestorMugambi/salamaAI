@@ -203,11 +203,7 @@ class UserProfile(Base):
         back_populates="profiles",
     )
 
-    risk_assessment_results = relationship(
-        "RiskAssessmentResult",
-        back_populates="profile",
-        cascade="all, delete-orphan",
-    )
+
 
 
 # =========================================================
@@ -620,18 +616,9 @@ class RiskAssessmentResult(Base):
         unique=True,
     )
 
-    # =====================================================
-    # Relationships
-    # =====================================================
     user_id = Column(
         PG_UUID(as_uuid=True),
         ForeignKey("user.id"),
-        nullable=False,
-    )
-
-    profile_id = Column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("user_profile.id"),
         nullable=False,
     )
 
@@ -642,75 +629,84 @@ class RiskAssessmentResult(Base):
     )
 
     # =====================================================
-    # Model Information
+    # Fields strictly matching RiskAssessmentResultRead
     # =====================================================
-    model_name = Column(
-        String(100),
+    disease = Column(
+        String(255),
         nullable=False,
     )
-    # Example:
-    # "stroke_xgboost_v1"
-    # "chd_randomforest_v2"
 
-    disease_type = Column(
-        Enum(DiseaseType),
-        nullable=False,
-    )
-    # Example:
-    # CHD
-    # STROKE
-    # HYPERTENSION
-    # CVD
-
-    model_version = Column(
-        String(50),
-        nullable=True,
-    )
-
-    # =====================================================
-    # Prediction Outputs
-    # =====================================================
-    risk_probability = Column(
+    risk_score = Column(
         Float,
         nullable=False,
     )
-    # Example:
-    # 0.83
 
     risk_percentage = Column(
         Float,
         nullable=False,
-    )
-    # Example:
-    # 83.0
+    ) # <--- Added to model to match schema (e.g., 83.0)
 
-    risk_level = Column(
-        Enum(RiskLevel),
+    risk_label = Column(
+        String(100),
         nullable=False,
     )
-    # Example:
-    # LOW
-    # MODERATE
-    # HIGH
-    # CRITICAL
 
-    prediction_label = Column(
-        Boolean,
+    model_version = Column(
+        String(50),
         nullable=False,
     )
-    # True = High Risk
-    # False = Low Risk
+
+    predicted_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
 
     # =====================================================
-    # Explainability / AI Insights
+    # Relationships
+    # =====================================================
+    user = relationship(
+        "User",
+        back_populates="risk_assessment_results",
+    )
+
+    assessment = relationship(
+        "HealthAssessment",
+        back_populates="risk_assessment_results",
+    )
+
+    # 1:1 Relationship to Explainability table
+    explainability = relationship(
+        "RiskAssessmentExplainability",
+        back_populates="risk_assessment",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    
+class RiskAssessmentExplainability(Base):
+    __tablename__ = "risk_assessment_explainability"
+
+    id = Column(
+        PG_UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+        unique=True,
+    )
+
+    risk_assessment_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("risk_assessment_result.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
+
+    # =====================================================
+    # AI Insights & Metrics
     # =====================================================
     top_risk_factors = Column(
         Text,
         nullable=True,
     )
-    # JSON string or comma-separated values
-    # Example:
-    # ["high systolic bp", "smoking", "high glucose"]
 
     recommendation = Column(
         Text,
@@ -722,53 +718,25 @@ class RiskAssessmentResult(Base):
         nullable=True,
     )
 
-    # =====================================================
-    # Optional Explainability Scores
-    # =====================================================
     shap_values = Column(
         Text,
         nullable=True,
     )
-    # Store serialized JSON
 
     lime_explanation = Column(
         Text,
         nullable=True,
     )
 
-    # =====================================================
-    # Metadata
-    # =====================================================
     inference_time_ms = Column(
         Float,
         nullable=True,
     )
 
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-    )
-
     # =====================================================
     # Relationships
     # =====================================================
-    user = relationship("User")
-
-    profile = relationship("UserProfile")
-
-    assessment = relationship("HealthAssessment")
-
-    user = relationship(
-        "User",
-        back_populates="risk_assessment_results",
-    )
-
-    profile = relationship(
-        "UserProfile",
-        back_populates="risk_assessment_results",
-    )
-
-    assessment = relationship(
-        "HealthAssessment",
-        back_populates="risk_assessment_results",
+    risk_assessment = relationship(
+        "RiskAssessmentResult",
+        back_populates="explainability",
     )

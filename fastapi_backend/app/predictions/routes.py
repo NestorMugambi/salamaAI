@@ -1,5 +1,7 @@
 """
 predictions/routes.py
+API layer routing execution context targets. Decoupled from internal database 
+queries and artifact caching steps.
 """
 
 from datetime import datetime, timezone
@@ -8,15 +10,18 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_async_session
+from app.database import get_async_session, User
 from app.users import current_active_user
-from app.database import User
+
 from .schemas import (
     PredictionRequest,
     PredictionResponse,
     RiskAssessmentResultRead,
 )
-from .service import diagnose, get_latest_results, run_predictions
+# Clean explicit sub-module imports matching the new structure
+from .service import run_predictions
+from .queries import get_latest_results
+from .diagnostics import run_system_diagnostic
 
 router = APIRouter(prefix="/predictions", tags=["Predictions"])
 
@@ -76,6 +81,7 @@ async def prediction_history(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
 ) -> list[RiskAssessmentResultRead]:
+    # Route now calls queries sub-module directly for data extraction
     records = await get_latest_results(user_id=user.id, session=session)
     return [RiskAssessmentResultRead.model_validate(r) for r in records]
 
@@ -98,4 +104,5 @@ async def diagnose_predictions(
 
     Use this endpoint first when /run returns empty results.
     """
-    return await diagnose(user_id=user.id, session=session)
+    # Route calls specialized diagnostic runner isolated from standard inference routes
+    return await run_system_diagnostic(user_id=user.id, session=session)
