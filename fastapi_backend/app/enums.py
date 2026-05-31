@@ -157,3 +157,22 @@ class BpMedication(str, Enum):
     DIURETIC = ("diuretic",)
     ACE_INHIBITOR = ("ace_inhibitor",)
     OTHER = "other"
+
+
+class AppointmentStatus(str, Enum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    MISSED = "missed"
+
+
+class ClinicianPatientStatus(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    DISCHARGED = "discharged"
+    
+class UserRole(str, Enum):
+    PATIENT = "patient"
+    CLINICIAN = "clinician"
+    ADMIN = "admin"

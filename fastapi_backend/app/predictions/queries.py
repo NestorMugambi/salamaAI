@@ -5,13 +5,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from app.models import RiskAssessmentResult, UserProfile, HealthAssessment
 
-async def fetch_user_profile(user_id: UUID, session: AsyncSession) -> UserProfile | None:
+
+async def fetch_user_profile(
+    user_id: UUID, session: AsyncSession
+) -> UserProfile | None:
     result = await session.execute(
         select(UserProfile).where(UserProfile.user_id == user_id)
     )
     return result.scalar_one_or_none()
 
-async def fetch_latest_assessment(user_id: UUID, session: AsyncSession) -> HealthAssessment | None:
+
+async def fetch_latest_assessment(
+    user_id: UUID, session: AsyncSession
+) -> HealthAssessment | None:
     result = await session.execute(
         select(HealthAssessment)
         .where(HealthAssessment.user_id == user_id)
@@ -23,6 +29,7 @@ async def fetch_latest_assessment(user_id: UUID, session: AsyncSession) -> Healt
         )
     )
     return result.scalar_one_or_none()
+
 
 async def get_latest_results(
     user_id: UUID,

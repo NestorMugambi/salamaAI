@@ -31,7 +31,7 @@ class DoseScheduleCreate(DoseScheduleBase):
 
 
 class PrescriptionCreate(PrescriptionBase):
-    schedule: List[DoseScheduleCreate] = Field(default_factory=list)
+    schedules: List[DoseScheduleCreate] = Field(default_factory=list)
 
 
 # Read Schema (For GET responses)
@@ -42,4 +42,4 @@ class DoseScheduleRead(DoseScheduleBase):
 class PrescriptionRead(PrescriptionBase):
     id: int
     user_id: UUID
-    schedule: List[DoseScheduleRead]
+    schedules: List[DoseScheduleRead]

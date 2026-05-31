@@ -24,9 +24,9 @@ class PrescriptionService:
         )
 
         # Add dose schedules
-        for schedule_data in data.schedule:
+        for schedule_data in data.schedules:
             schedule = DoseSchedule(**schedule_data.model_dump())
-            prescription.schedule.append(schedule)
+            prescription.schedules.append(schedule)
 
         self.session.add(prescription)
         await self.session.flush()  # Generate IDs but don't commit
@@ -37,7 +37,7 @@ class PrescriptionService:
         # Explicitly load schedule relationship
         result = await self.session.execute(
             select(Prescription)
-            .options(selectinload(Prescription.schedule))
+            .options(selectinload(Prescription.schedules))
             .where(Prescription.id == prescription.id)
         )
         full_prescription = result.scalar_one()
@@ -51,9 +51,9 @@ class PrescriptionService:
             medication_name=full_prescription.medication_name,
             route=full_prescription.route,
             prescription_trigger=full_prescription.prescription_trigger,
-            schedule=[
+            schedules=[
                 DoseScheduleRead(**schedule.__dict__)
-                for schedule in full_prescription.schedule
+                for schedule in full_prescription.schedules
             ],
         )
 
@@ -78,9 +78,9 @@ class PrescriptionService:
             medication_name=prescription.medication_name,
             route=prescription.route,
             prescription_trigger=prescription.prescription_trigger,
-            schedule=[
+            schedules=[
                 DoseScheduleRead(**schedule.__dict__)
-                for schedule in prescription.schedule
+                for schedule in prescription.schedules
             ],
         )
 
@@ -90,7 +90,7 @@ class PrescriptionService:
         """Fetch all prescriptions for a user with their schedules."""
         result = await self.session.execute(
             select(Prescription)
-            .options(selectinload(Prescription.schedule))  # Eager load schedule
+            .options(selectinload(Prescription.schedules))  # Eager load schedule
             .where(Prescription.user_id == user_id)
             .limit(limit)
         )
@@ -103,8 +103,8 @@ class PrescriptionService:
                 medication_name=p.medication_name,
                 route=p.route,
                 prescription_trigger=p.prescription_trigger,
-                schedule=[
-                    DoseScheduleRead(**schedule.__dict__) for schedule in p.schedule
+                schedules=[
+                    DoseScheduleRead(**schedule.__dict__) for schedule in p.schedules
                 ],
             )
             for p in prescriptions

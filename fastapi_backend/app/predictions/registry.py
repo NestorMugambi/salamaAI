@@ -24,6 +24,7 @@ SCALER_PATHS = {
 _models: dict[str, Any] = {}
 _scalers: dict[str, Any] = {}
 
+
 def load_model(disease: str) -> Any:
     if disease not in _models:
         filename, _ = MODEL_PATHS[disease]
@@ -33,10 +34,12 @@ def load_model(disease: str) -> Any:
         _models[disease] = joblib.load(path)
     return _models[disease]
 
+
 def load_scaler(disease: str) -> Any | None:
     scaler_filename = SCALER_PATHS.get(disease)
     if not scaler_filename or disease not in _scalers:
-        if not scaler_filename: return None
+        if not scaler_filename:
+            return None
         path = MODEL_DIR / scaler_filename
         if not path.exists():
             raise FileNotFoundError(f"Scaler missing: {path}")

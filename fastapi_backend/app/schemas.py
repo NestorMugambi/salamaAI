@@ -3,32 +3,18 @@ import uuid
 from fastapi_users import schemas
 from pydantic import BaseModel
 from uuid import UUID
+from .enums import UserRole
 
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
-    pass
+    role:UserRole
 
 
 class UserCreate(schemas.BaseUserCreate):
-    pass
+    role:UserRole
 
 
 class UserUpdate(schemas.BaseUserUpdate):
-    pass
+    role:UserRole
 
 
-class ItemBase(BaseModel):
-    name: str
-    description: str | None = None
-    quantity: int | None = None
-
-
-class ItemCreate(ItemBase):
-    pass
-
-
-class ItemRead(ItemBase):
-    id: UUID
-    user_id: UUID
-
-    model_config = {"from_attributes": True}

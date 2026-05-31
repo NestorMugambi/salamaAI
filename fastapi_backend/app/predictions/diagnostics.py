@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from . import registry, queries
 from .service import _FEATURE_ENGINEERS
 
+
 async def run_system_diagnostic(user_id: UUID, session: AsyncSession) -> dict:
     """Full system diagnostic — checks model files, data states, and engineering matrices without real inference."""
     report: dict[str, Any] = {
@@ -37,7 +38,9 @@ async def run_system_diagnostic(user_id: UUID, session: AsyncSession) -> dict:
             report["scaler_files"][disease] = {
                 "path": str(s_path),
                 "exists": s_path.exists(),
-                "size_kb": round(s_path.stat().st_size / 1024, 1) if s_path.exists() else None,
+                "size_kb": round(s_path.stat().st_size / 1024, 1)
+                if s_path.exists()
+                else None,
             }
 
     # 2. Extract Base Profiles Data
@@ -75,7 +78,9 @@ async def run_system_diagnostic(user_id: UUID, session: AsyncSession) -> dict:
         else:
             report["errors"].append("No HealthAssessment row found for this user.")
     except Exception as exc:
-        report["errors"].append(f"Assessment query error: {exc}\n{traceback.format_exc()}")
+        report["errors"].append(
+            f"Assessment query error: {exc}\n{traceback.format_exc()}"
+        )
 
     # 4. Dry-Run Feature Transformation Engines
     if profile and assessment:

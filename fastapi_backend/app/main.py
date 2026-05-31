@@ -10,6 +10,8 @@ from .health_data.routes import router as health_data_router
 from .prescription.routes import router as prescription_router
 from .user_profile.routes import router as profile_router
 from .predictions.routes import router as predictions_router
+from .clinician_dashboard.routes import router as clinician_router
+from .appointments.routes import router as appointments_router
 
 from app.config import settings
 
@@ -61,5 +63,7 @@ app.include_router(health_data_router, prefix="/health_data")
 app.include_router(prescription_router, prefix="/prescription")
 app.include_router(profile_router, prefix="/profile")
 app.include_router(predictions_router, prefix="/predictions")
+app.include_router(clinician_router,prefix= "/clinicians")
+app.include_router(appointments_router, prefix = "/appointments")
 
 add_pagination(app)

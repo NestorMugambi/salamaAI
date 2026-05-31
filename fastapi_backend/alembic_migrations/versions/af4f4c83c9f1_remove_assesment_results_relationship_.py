@@ -13,8 +13,8 @@ import fastapi_users_db_sqlalchemy
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'af4f4c83c9f1'
-down_revision: Union[str, None] = 'e6b84ce95c35'
+revision: str = "af4f4c83c9f1"
+down_revision: Union[str, None] = "e6b84ce95c35"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

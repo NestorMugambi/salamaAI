@@ -12,14 +12,17 @@ from sqlalchemy import (
     DateTime,
     Enum,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import DeclarativeBase, relationship
 
 from .enums import (
+    AppointmentStatus,
     BpHistory,
     BpMedication,
+    ClinicianPatientStatus,
     DescriptiveStatistic,
     TemporalRelationship,
     TemporalRelationshipToSleep,
@@ -35,6 +38,7 @@ from .enums import (
     RiskLevel,
     EducationLevel,
     PhysicalActivity,
+    UserRole,
 )
 
 
@@ -47,6 +51,13 @@ class Base(DeclarativeBase):
 # =========================================================
 class User(SQLAlchemyBaseUserTableUUID, Base):
     __tablename__ = "user"
+    
+    role = Column(
+        Enum(UserRole, name="user_role"),
+        nullable=False,
+        default=UserRole.PATIENT,
+    ) 
+
 
     # -------------------------
     # Relationships
@@ -69,9 +80,16 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         cascade="all, delete-orphan",
     )
 
-    profiles = relationship(
+    patient_profile = relationship(
         "UserProfile",
         back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    clinician_profile = relationship(
+        "ClinicianProfile",
+        back_populates="user",
+        uselist=False,
         cascade="all, delete-orphan",
     )
 
@@ -86,6 +104,133 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    appointments = relationship(
+        "Appointment",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    clinicians = relationship(
+        "ClinicianPatient",
+        back_populates="patient",
+        cascade="all, delete-orphan",
+    )
+
+    
+
+
+class ClinicianProfile(Base):
+    __tablename__ = "clinician_profiles"
+
+    id = Column(
+        PG_UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+    )
+
+    user_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("user.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
+
+    slug = Column(
+        String(255),
+        unique=True,
+        nullable=False,
+        index=True,
+    )
+
+    first_name = Column(
+        String,
+        nullable=False,
+    )
+
+    middle_name = Column(
+        String,
+        nullable=True,
+    )
+
+    last_name = Column(
+        String,
+        nullable=False,
+    )
+
+    specialization = Column(
+        String,
+        nullable=False,
+    )
+
+    license_number = Column(
+        String,
+        unique=True,
+        nullable=False,
+    )
+
+    hospital_name = Column(
+        String,
+        nullable=True,
+    )
+
+    years_of_experience = Column(
+        Integer,
+        nullable=True,
+    )
+
+    bio = Column(
+        Text,
+        nullable=True,
+    )
+
+    is_verified = Column(
+        Boolean,
+        default=False,
+    )
+
+    is_active = Column(
+        Boolean,
+        default=True,
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    user = relationship(
+        "User",
+        back_populates="clinician_profile",
+    )
+
+    appointments = relationship(
+        "Appointment",
+        back_populates="clinician_profile",
+        cascade="all, delete-orphan",
+    )
+    patients = relationship(
+        "ClinicianPatient",
+        back_populates="clinician_profile",
+        cascade="all, delete-orphan",
+    )
+
+    @property
+    def full_name(self):
+        return " ".join(
+            filter(
+                None,
+                [
+                    self.first_name,
+                    self.middle_name,
+                    self.last_name,
+                ],
+            )
+        )
 
 
 # =========================================================
@@ -200,10 +345,99 @@ class UserProfile(Base):
 
     user = relationship(
         "User",
-        back_populates="profiles",
+        back_populates="patient_profile",
     )
 
 
+    @property
+    def full_name(self):
+        return " ".join(
+            filter(
+                None,
+                [
+                    self.first_name,
+                    self.middle_name,
+                    self.last_name,
+                ],
+            )
+        )
+
+
+class ClinicianPatient(Base):
+    __tablename__ = "clinician_patients"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "clinician_profile_id",
+            "patient_id",
+            name="uq_clinician_patient",
+        ),
+    )
+
+    id = Column(
+        PG_UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+        unique=True,
+        nullable=False,
+    )
+
+    clinician_profile_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey(
+            "clinician_profiles.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
+    patient_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey(
+            "user.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
+    status = Column(
+        Enum(ClinicianPatientStatus),
+        nullable=False,
+        default=ClinicianPatientStatus.ACTIVE,
+    )
+
+    assigned_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    # Relationships
+
+    clinician_profile = relationship(
+        "ClinicianProfile",
+        back_populates="patients",
+    )
+
+    patient = relationship(
+        "User",
+        back_populates="clinicians",
+    )
 
 
 # =========================================================
@@ -644,7 +878,7 @@ class RiskAssessmentResult(Base):
     risk_percentage = Column(
         Float,
         nullable=False,
-    ) # <--- Added to model to match schema (e.g., 83.0)
+    )  # <--- Added to model to match schema (e.g., 83.0)
 
     risk_label = Column(
         String(100),
@@ -682,7 +916,8 @@ class RiskAssessmentResult(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
-    
+
+
 class RiskAssessmentExplainability(Base):
     __tablename__ = "risk_assessment_explainability"
 
@@ -739,4 +974,81 @@ class RiskAssessmentExplainability(Base):
     risk_assessment = relationship(
         "RiskAssessmentResult",
         back_populates="explainability",
+    )
+
+
+class Appointment(Base):
+    __tablename__ = "appointments"
+
+    id = Column(
+        PG_UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+    )
+
+    patient_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("user.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    clinician_profile_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey(
+            "clinician_profiles.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+    )
+
+    appointment_date = Column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+
+    reason = Column(
+        Text,
+        nullable=True,
+    )
+
+    clinician_notes = Column(
+        Text,
+        nullable=True,
+    )
+
+    status = Column(
+        Enum(AppointmentStatus),
+        nullable=False,
+        default=AppointmentStatus.PENDING,
+    )
+
+    is_virtual = Column(
+        Boolean,
+        default=False,
+    )
+
+    meeting_link = Column(
+        String,
+        nullable=True,
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    user = relationship(
+        "User",
+        back_populates="appointments",
+    )
+
+    clinician_profile = relationship(
+        "ClinicianProfile",
+        back_populates="appointments",
     )

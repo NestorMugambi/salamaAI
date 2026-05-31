@@ -18,6 +18,7 @@ from .schemas import (
     PredictionResponse,
     RiskAssessmentResultRead,
 )
+
 # Clean explicit sub-module imports matching the new structure
 from .service import run_predictions
 from .queries import get_latest_results
