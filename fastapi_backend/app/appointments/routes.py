@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import User, get_async_session
 from app.users import current_active_user
-from .import service as appt_service
+from . import service as appt_service
 from .schemas import (
     AppointmentBookRequest,
     AppointmentListResponse,
@@ -35,6 +35,7 @@ router = APIRouter(prefix="/appointments", tags=["Patient Appointments"])
 
 # ── Clinician discovery ───────────────────────────────────────────────────────
 
+
 @router.get(
     "/clinicians",
     response_model=ClinicianListResponse,
@@ -46,15 +47,20 @@ router = APIRouter(prefix="/appointments", tags=["Patient Appointments"])
     ),
 )
 async def browse_clinicians(
-    search: Optional[str] = Query(default=None, description="Search by name or hospital"),
+    search: Optional[str] = Query(
+        default=None, description="Search by name or hospital"
+    ),
     specialization: Optional[str] = Query(default=None, description="e.g. Cardiology"),
     verified_only: bool = Query(default=True),
     session: AsyncSession = Depends(get_async_session),
 ) -> ClinicianListResponse:
-    return await appt_service.list_clinicians(session, search, specialization, verified_only)
+    return await appt_service.list_clinicians(
+        session, search, specialization, verified_only
+    )
 
 
 # ── Booking ───────────────────────────────────────────────────────────────────
+
 
 @router.post(
     "/book",
@@ -80,6 +86,7 @@ async def book_appointment(
 
 
 # ── Patient's own appointments ────────────────────────────────────────────────
+
 
 @router.get(
     "/me",
@@ -119,7 +126,9 @@ async def appointment_detail(
     session: AsyncSession = Depends(get_async_session),
 ) -> AppointmentRead:
     try:
-        return await appt_service.get_appointment_detail(user.id, appointment_id, session)
+        return await appt_service.get_appointment_detail(
+            user.id, appointment_id, session
+        )
     except ValueError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(exc))
 
@@ -132,7 +141,9 @@ async def appointment_detail(
 )
 async def reschedule_appointment(
     appointment_id: UUID,
-    new_date: datetime = Query(..., description="New appointment datetime (timezone-aware)"),
+    new_date: datetime = Query(
+        ..., description="New appointment datetime (timezone-aware)"
+    ),
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
 ) -> AppointmentRead:

@@ -9,7 +9,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Prescription, User, UserProfile
-from app.clinician_dashboard.schemas import PrescriptionCreate, PrescriptionRead, PrescriptionListResponse
+from app.clinician_dashboard.schemas import (
+    PrescriptionCreate,
+    PrescriptionRead,
+    PrescriptionListResponse,
+)
 from .base_db import _require_clinician, _patient_users, _patient_profiles
 from .utils import _patient_full_name
 
@@ -74,7 +78,7 @@ async def get_prescriptions(
     prescriptions = rows.scalars().all()
 
     patient_ids = list({rx.patient_id for rx in prescriptions})
-    users    = await _patient_users(patient_ids, session)
+    users = await _patient_users(patient_ids, session)
     profiles = await _patient_profiles(patient_ids, session)
 
     reads = [
@@ -92,7 +96,9 @@ async def get_prescriptions(
             patient_name=_patient_full_name(
                 profiles.get(rx.patient_id),
                 users.get(rx.patient_id),
-            ) if rx.patient_id in users else None,
+            )
+            if rx.patient_id in users
+            else None,
         )
         for rx in prescriptions
     ]

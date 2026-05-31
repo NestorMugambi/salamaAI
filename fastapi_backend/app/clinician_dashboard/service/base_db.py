@@ -14,9 +14,7 @@ async def _get_clinician_profile(
     session: AsyncSession,
 ) -> ClinicianProfile | None:
     result = await session.execute(
-        select(ClinicianProfile).where(
-            ClinicianProfile.user_id == clinician_user_id
-        )
+        select(ClinicianProfile).where(ClinicianProfile.user_id == clinician_user_id)
     )
     return result.scalar_one_or_none()
 
@@ -67,7 +65,5 @@ async def _patient_users(
 ) -> dict[UUID, User]:
     if not patient_ids:
         return {}
-    rows = await session.execute(
-        select(User).where(User.id.in_(patient_ids))
-    )
+    rows = await session.execute(select(User).where(User.id.in_(patient_ids)))
     return {u.id: u for u in rows.scalars().all()}

@@ -6,7 +6,11 @@ Clinician identity updates and profile reading transactions.
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import ClinicianProfile
-from app.clinician_dashboard.schemas import ClinicianProfileCreate, ClinicianProfileRead, ClinicianProfileUpdate
+from app.clinician_dashboard.schemas import (
+    ClinicianProfileCreate,
+    ClinicianProfileRead,
+    ClinicianProfileUpdate,
+)
 from .base_db import _get_clinician_profile, _require_clinician
 from .utils import _slug
 

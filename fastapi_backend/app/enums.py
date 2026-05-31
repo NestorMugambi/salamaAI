@@ -171,7 +171,8 @@ class ClinicianPatientStatus(str, Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     DISCHARGED = "discharged"
-    
+
+
 class UserRole(str, Enum):
     PATIENT = "patient"
     CLINICIAN = "clinician"

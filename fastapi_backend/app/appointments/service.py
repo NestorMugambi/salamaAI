@@ -23,6 +23,7 @@ from app.appointments.schemas import (
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+
 def _appt_to_read(
     appt: Appointment,
     clinician: ClinicianProfile | None = None,
@@ -91,6 +92,7 @@ async def _get_appointment_for_patient(
 # Missed appointment auto-marking
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 async def mark_missed_appointments(session: AsyncSession) -> int:
     """
     Mark any PENDING or ACCEPTED appointments whose date has passed as MISSED.
@@ -103,10 +105,12 @@ async def mark_missed_appointments(session: AsyncSession) -> int:
         .where(
             and_(
                 Appointment.appointment_date < now,
-                Appointment.status.in_([
-                    AppointmentStatus.PENDING,
-                    AppointmentStatus.ACCEPTED,
-                ]),
+                Appointment.status.in_(
+                    [
+                        AppointmentStatus.PENDING,
+                        AppointmentStatus.ACCEPTED,
+                    ]
+                ),
             )
         )
         .values(status=AppointmentStatus.MISSED)
@@ -119,6 +123,7 @@ async def mark_missed_appointments(session: AsyncSession) -> int:
 # ══════════════════════════════════════════════════════════════════════════════
 # Clinician discovery
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 async def list_clinicians(
     session: AsyncSession,
@@ -168,6 +173,7 @@ async def list_clinicians(
 # Booking
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 async def book_appointment(
     patient_id: UUID,
     data: AppointmentBookRequest,
@@ -186,13 +192,16 @@ async def book_appointment(
         select(Appointment).where(
             and_(
                 Appointment.clinician_profile_id == data.clinician_profile_id,
-                Appointment.status.not_in([AppointmentStatus.CANCELLED, AppointmentStatus.MISSED]),
+                Appointment.status.not_in(
+                    [AppointmentStatus.CANCELLED, AppointmentStatus.MISSED]
+                ),
                 func.abs(
                     func.extract(
                         "epoch",
                         Appointment.appointment_date - data.appointment_date,
                     )
-                ) < 1800,
+                )
+                < 1800,
             )
         )
     )
@@ -222,10 +231,12 @@ async def book_appointment(
         )
     )
     if not existing_link.scalar_one_or_none():
-        session.add(ClinicianPatient(
-            clinician_profile_id=data.clinician_profile_id,
-            patient_id=patient_id,
-        ))
+        session.add(
+            ClinicianPatient(
+                clinician_profile_id=data.clinician_profile_id,
+                patient_id=patient_id,
+            )
+        )
 
     await session.commit()
     await session.refresh(appt)
@@ -235,6 +246,7 @@ async def book_appointment(
 # ══════════════════════════════════════════════════════════════════════════════
 # Patient appointment management
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 async def get_my_appointments(
     patient_id: UUID,
@@ -257,9 +269,7 @@ async def get_my_appointments(
 
     q = q.order_by(Appointment.appointment_date.desc())
 
-    count_result = await session.execute(
-        select(func.count()).select_from(q.subquery())
-    )
+    count_result = await session.execute(select(func.count()).select_from(q.subquery()))
     total: int = count_result.scalar_one()
     total_pages = math.ceil(total / page_size) if total else 1
 
@@ -334,7 +344,9 @@ async def reschedule_appointment(
             "Please contact your clinician to reschedule an accepted appointment."
         )
 
-    aware_new_date = new_date if new_date.tzinfo else new_date.replace(tzinfo=timezone.utc)
+    aware_new_date = (
+        new_date if new_date.tzinfo else new_date.replace(tzinfo=timezone.utc)
+    )
     if aware_new_date <= datetime.now(timezone.utc):
         raise ValueError("New appointment date must be in the future.")
 

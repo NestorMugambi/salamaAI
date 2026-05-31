@@ -37,7 +37,9 @@ def _is_high_risk(results: list[RiskAssessmentResult]) -> bool:
     return False
 
 
-def _build_risk_cards(results: list[RiskAssessmentResult]) -> tuple[list[RiskCardSummary], float, str]:
+def _build_risk_cards(
+    results: list[RiskAssessmentResult],
+) -> tuple[list[RiskCardSummary], float, str]:
     """Returns (cards, overall_percent, overall_label)."""
     latest: dict[str, RiskAssessmentResult] = {}
     for r in results:
@@ -50,15 +52,17 @@ def _build_risk_cards(results: list[RiskAssessmentResult]) -> tuple[list[RiskCar
         r = latest.get(disease)
         score = round(r.risk_score, 4) if r else 0.0
         scores.append(score)
-        cards.append(RiskCardSummary(
-            disease=disease,
-            display_name=meta["display_name"],
-            risk_score=score,
-            risk_label=r.risk_label if r else "No data",
-            risk_percent=round(score * 100, 1),
-            color_hint=meta["color_hint"],
-            last_assessed=r.predicted_at if r else None,
-        ))
+        cards.append(
+            RiskCardSummary(
+                disease=disease,
+                display_name=meta["display_name"],
+                risk_score=score,
+                risk_label=r.risk_label if r else "No data",
+                risk_percent=round(score * 100, 1),
+                color_hint=meta["color_hint"],
+                last_assessed=r.predicted_at if r else None,
+            )
+        )
 
     overall_pct = round((sum(scores) / len(scores)) * 100, 1) if scores else 0.0
     return cards, overall_pct, _overall_label(overall_pct)

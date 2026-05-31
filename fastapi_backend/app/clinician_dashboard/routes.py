@@ -32,10 +32,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_async_session
 from app.database import User
 from app.users import current_active_user
-from .service import create_clinician_profile, get_appointments, get_my_patients, get_patient_detail, get_prescriptions, update_clinician_profile
+from .service import (
+    create_clinician_profile,
+    get_appointments,
+    get_my_patients,
+    get_patient_detail,
+    get_prescriptions,
+    update_clinician_profile,
+)
 from .service import get_my_profile as get_profile_from_db
 from .service import update_appointment as update_appointment_db
-from . service import create_appointment as create_appointment_db
+from .service import create_appointment as create_appointment_db
 from .schemas import (
     AppointmentCreate,
     AppointmentListResponse,
@@ -56,6 +63,7 @@ router = APIRouter(prefix="/clinicians", tags=["Clinician Dashboard"])
 
 
 # ── Profile ───────────────────────────────────────────────────────────────────
+
 
 @router.post(
     "/profile",
@@ -106,6 +114,7 @@ async def update_profile(
 
 
 # ── Patients ──────────────────────────────────────────────────────────────────
+
 
 @router.get(
     "/me/patients",
@@ -173,6 +182,7 @@ async def get_patient(
 
 
 # ── Appointments ──────────────────────────────────────────────────────────────
+
 
 @router.post(
     "/me/appointments",
@@ -244,6 +254,7 @@ async def update_appointment(
 
 
 # ── Prescriptions ─────────────────────────────────────────────────────────────
+
 
 @router.post(
     "/me/prescriptions",

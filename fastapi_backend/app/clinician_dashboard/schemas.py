@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field, field_validator
 # Clinician Profile
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class ClinicianProfileCreate(BaseModel):
     first_name: str
     middle_name: Optional[str] = None
@@ -63,11 +64,12 @@ class ClinicianProfileRead(BaseModel):
 # Patient summaries (for list / search views)
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class RiskCardSummary(BaseModel):
     disease: str
     display_name: str
     risk_score: float
-    risk_label: str          # Low | Moderate | High
+    risk_label: str  # Low | Moderate | High
     risk_percent: float
     color_hint: str
     last_assessed: Optional[datetime] = None
@@ -77,6 +79,7 @@ class RiskCardSummary(BaseModel):
 
 class PatientSummary(BaseModel):
     """Compact row for patient lists and search results."""
+
     user_id: UUID
     full_name: str
     age: Optional[int] = None
@@ -86,13 +89,14 @@ class PatientSummary(BaseModel):
     overall_risk_label: str = "No data"
     risk_cards: list[RiskCardSummary] = []
     last_assessed: Optional[datetime] = None
-    linked_since: Optional[datetime] = None   # ClinicianPatient.created_at
+    linked_since: Optional[datetime] = None  # ClinicianPatient.created_at
 
     model_config = {"from_attributes": True}
 
 
 class HighRiskPatientResponse(BaseModel):
     """Response for GET /clinicians/me/patients?risk=high"""
+
     total: int
     patients: list[PatientSummary]
 
@@ -106,6 +110,7 @@ class PatientSearchResponse(BaseModel):
 # ══════════════════════════════════════════════════════════════════════════════
 # Patient detail (profile + latest assessment)
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 class BloodPressureRead(BaseModel):
     systolic_value: float
@@ -163,6 +168,7 @@ class PatientDetailResponse(BaseModel):
 # Appointments
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class AppointmentCreate(BaseModel):
     patient_id: UUID
     appointment_date: datetime
@@ -217,6 +223,7 @@ class AppointmentListResponse(BaseModel):
 # ══════════════════════════════════════════════════════════════════════════════
 # Prescriptions
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 class PrescriptionCreate(BaseModel):
     patient_id: UUID

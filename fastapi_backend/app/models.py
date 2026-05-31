@@ -51,13 +51,12 @@ class Base(DeclarativeBase):
 # =========================================================
 class User(SQLAlchemyBaseUserTableUUID, Base):
     __tablename__ = "user"
-    
+
     role = Column(
         Enum(UserRole, name="user_role"),
         nullable=False,
         default=UserRole.PATIENT,
-    ) 
-
+    )
 
     # -------------------------
     # Relationships
@@ -114,8 +113,6 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         back_populates="patient",
         cascade="all, delete-orphan",
     )
-
-    
 
 
 class ClinicianProfile(Base):
@@ -347,7 +344,6 @@ class UserProfile(Base):
         "User",
         back_populates="patient_profile",
     )
-
 
     @property
     def full_name(self):

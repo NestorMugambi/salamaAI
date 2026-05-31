@@ -23,6 +23,7 @@ from .utils import _patient_full_name
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+
 def _coerce_status(value: str | AppointmentStatus) -> AppointmentStatus:
     """Safely coerce a string or enum to AppointmentStatus."""
     if isinstance(value, AppointmentStatus):
@@ -62,6 +63,7 @@ def _appointment_to_read(
 # Missed appointment auto-marking
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 async def mark_missed_appointments(session: AsyncSession) -> int:
     """
     Mark any PENDING or ACCEPTED appointments whose date has passed as MISSED.
@@ -74,10 +76,12 @@ async def mark_missed_appointments(session: AsyncSession) -> int:
         .where(
             and_(
                 Appointment.appointment_date < now,
-                Appointment.status.in_([
-                    AppointmentStatus.PENDING,
-                    AppointmentStatus.ACCEPTED,
-                ]),
+                Appointment.status.in_(
+                    [
+                        AppointmentStatus.PENDING,
+                        AppointmentStatus.ACCEPTED,
+                    ]
+                ),
             )
         )
         .values(status=AppointmentStatus.MISSED)
@@ -90,6 +94,7 @@ async def mark_missed_appointments(session: AsyncSession) -> int:
 # ══════════════════════════════════════════════════════════════════════════════
 # Create
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 async def create_appointment(
     clinician_user_id: UUID,
@@ -129,6 +134,7 @@ async def create_appointment(
 # List
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 async def get_appointments(
     clinician_user_id: UUID,
     session: AsyncSession,
@@ -152,9 +158,7 @@ async def get_appointments(
 
     q = q.order_by(Appointment.appointment_date.asc())
 
-    count_result = await session.execute(
-        select(func.count()).select_from(q.subquery())
-    )
+    count_result = await session.execute(select(func.count()).select_from(q.subquery()))
     total: int = count_result.scalar_one()
     total_pages = math.ceil(total / page_size) if total else 1
 
@@ -163,7 +167,7 @@ async def get_appointments(
     appointments = appt_rows.scalars().all()
 
     patient_ids = list({a.patient_id for a in appointments})
-    users    = await _patient_users(patient_ids, session)
+    users = await _patient_users(patient_ids, session)
     profiles = await _patient_profiles(patient_ids, session)
 
     reads = [
@@ -171,8 +175,12 @@ async def get_appointments(
             a,
             patient_name=_patient_full_name(
                 profiles.get(a.patient_id), users.get(a.patient_id)
-            ) if users.get(a.patient_id) else None,
-            patient_email=str(users[a.patient_id].email) if a.patient_id in users else None,
+            )
+            if users.get(a.patient_id)
+            else None,
+            patient_email=str(users[a.patient_id].email)
+            if a.patient_id in users
+            else None,
         )
         for a in appointments
     ]
@@ -189,6 +197,7 @@ async def get_appointments(
 # ══════════════════════════════════════════════════════════════════════════════
 # Update
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 async def update_appointment(
     clinician_user_id: UUID,

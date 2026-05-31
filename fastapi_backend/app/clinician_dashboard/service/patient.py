@@ -8,12 +8,27 @@ from sqlalchemy import select, and_, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import ClinicianPatient, User, UserProfile, HealthAssessment, RiskAssessmentResult
-from app.clinician_dashboard.schemas import (
-    HighRiskPatientResponse, PatientSummary, PatientDetailResponse, 
-    UserProfileRead, HealthAssessmentSummary, PatientSearchResponse
+from app.models import (
+    ClinicianPatient,
+    User,
+    UserProfile,
+    HealthAssessment,
+    RiskAssessmentResult,
 )
-from .base_db import _require_clinician, _patient_users, _patient_profiles, _patient_risk_results
+from app.clinician_dashboard.schemas import (
+    HighRiskPatientResponse,
+    PatientSummary,
+    PatientDetailResponse,
+    UserProfileRead,
+    HealthAssessmentSummary,
+    PatientSearchResponse,
+)
+from .base_db import (
+    _require_clinician,
+    _patient_users,
+    _patient_profiles,
+    _patient_risk_results,
+)
 from .utils import _build_patient_summary, _build_risk_cards, _patient_full_name
 
 
@@ -27,24 +42,22 @@ async def get_my_patients(
     cp = await _require_clinician(clinician_user_id, session)
 
     links_result = await session.execute(
-        select(ClinicianPatient).where(
-            ClinicianPatient.clinician_profile_id == cp.id
-        )
+        select(ClinicianPatient).where(ClinicianPatient.clinician_profile_id == cp.id)
     )
     links = links_result.scalars().all()
     patient_ids = [lnk.patient_id for lnk in links]
-    link_dates  = {lnk.patient_id: lnk.created_at for lnk in links}
+    link_dates = {lnk.patient_id: lnk.created_at for lnk in links}
 
     if not patient_ids:
         return HighRiskPatientResponse(total=0, patients=[])
 
-    users    = await _patient_users(patient_ids, session)
+    users = await _patient_users(patient_ids, session)
     profiles = await _patient_profiles(patient_ids, session)
-    results  = await _patient_risk_results(patient_ids, session)
+    results = await _patient_risk_results(patient_ids, session)
 
     summaries: list[PatientSummary] = []
     for pid in patient_ids:
-        user    = users.get(pid)
+        user = users.get(pid)
         profile = profiles.get(pid)
         if not user:
             continue
@@ -58,9 +71,9 @@ async def get_my_patients(
 
     summaries.sort(key=lambda s: s.overall_risk_percent, reverse=True)
 
-    total  = len(summaries)
+    total = len(summaries)
     offset = (page - 1) * page_size
-    page_items = summaries[offset: offset + page_size]
+    page_items = summaries[offset : offset + page_size]
 
     return HighRiskPatientResponse(total=total, patients=page_items)
 
@@ -119,6 +132,7 @@ async def get_patient_detail(
     assessment_schema: HealthAssessmentSummary | None = None
     if latest_assessment:
         from clinician_dashboard.schemas import BloodPressureRead
+
         bps = [
             BloodPressureRead(
                 systolic_value=bp.systolic_value,
@@ -142,9 +156,15 @@ async def get_patient_detail(
             total_cholesterol=latest_assessment.total_cholesterol,
             hdl_cholesterol=latest_assessment.hdl_cholesterol,
             on_bp_medication=latest_assessment.on_bp_medication,
-            smoking_status=str(latest_assessment.smoking_status.value) if latest_assessment.smoking_status else None,
-            alcohol_use=str(latest_assessment.alcohol_use.value) if latest_assessment.alcohol_use else None,
-            physical_activity_level=str(latest_assessment.physical_activity_level.value) if latest_assessment.physical_activity_level else None,
+            smoking_status=str(latest_assessment.smoking_status.value)
+            if latest_assessment.smoking_status
+            else None,
+            alcohol_use=str(latest_assessment.alcohol_use.value)
+            if latest_assessment.alcohol_use
+            else None,
+            physical_activity_level=str(latest_assessment.physical_activity_level.value)
+            if latest_assessment.physical_activity_level
+            else None,
             assessment_notes=latest_assessment.assessment_notes,
             blood_pressures=bps,
         )
@@ -173,13 +193,11 @@ async def search_patients(
     cp = await _require_clinician(clinician_user_id, session)
 
     links_result = await session.execute(
-        select(ClinicianPatient).where(
-            ClinicianPatient.clinician_profile_id == cp.id
-        )
+        select(ClinicianPatient).where(ClinicianPatient.clinician_profile_id == cp.id)
     )
     links = links_result.scalars().all()
     patient_ids = [lnk.patient_id for lnk in links]
-    link_dates  = {lnk.patient_id: lnk.created_at for lnk in links}
+    link_dates = {lnk.patient_id: lnk.created_at for lnk in links}
 
     if not patient_ids:
         return PatientSearchResponse(query=query, total=0, results=[])
@@ -217,10 +235,10 @@ async def search_patients(
     if not matched_ids:
         return PatientSearchResponse(query=query, total=0, results=[])
 
-    users    = await _patient_users(matched_ids, session)
+    users = await _patient_users(matched_ids, session)
     profiles_full = await _patient_profiles(matched_ids, session)
     profiles_full.update(profile_map)
-    results  = await _patient_risk_results(matched_ids, session)
+    results = await _patient_risk_results(matched_ids, session)
 
     summaries = [
         _build_patient_summary(

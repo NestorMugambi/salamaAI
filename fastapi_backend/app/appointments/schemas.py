@@ -16,9 +16,11 @@ from app.enums import AppointmentStatus
 # Clinician discovery (so patient can browse who to book with)
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class ClinicianPublicRead(BaseModel):
     """Minimal clinician info shown to a patient when browsing / searching."""
-    id: UUID                          # clinician_profile.id
+
+    id: UUID  # clinician_profile.id
     slug: str
     full_name: str
     specialization: str
@@ -39,11 +41,18 @@ class ClinicianListResponse(BaseModel):
 # Appointment booking
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class AppointmentBookRequest(BaseModel):
-    clinician_profile_id: UUID = Field(..., description="ID of the clinician to book with")
-    appointment_date: datetime = Field(..., description="Requested date and time (timezone-aware)")
+    clinician_profile_id: UUID = Field(
+        ..., description="ID of the clinician to book with"
+    )
+    appointment_date: datetime = Field(
+        ..., description="Requested date and time (timezone-aware)"
+    )
     reason: Optional[str] = Field(default=None, description="Reason for the visit")
-    is_virtual: bool = Field(default=False, description="True for a video/online appointment")
+    is_virtual: bool = Field(
+        default=False, description="True for a video/online appointment"
+    )
 
     @field_validator("appointment_date")
     @classmethod
@@ -55,7 +64,9 @@ class AppointmentBookRequest(BaseModel):
 
 
 class AppointmentCancelRequest(BaseModel):
-    reason: Optional[str] = Field(default=None, description="Optional cancellation reason")
+    reason: Optional[str] = Field(
+        default=None, description="Optional cancellation reason"
+    )
 
 
 class AppointmentRead(BaseModel):
@@ -68,7 +79,7 @@ class AppointmentRead(BaseModel):
     appointment_date: datetime
     reason: Optional[str] = None
     clinician_notes: Optional[str] = None
-    status: AppointmentStatus                       # pending | confirmed | completed | cancelled
+    status: AppointmentStatus  # pending | confirmed | completed | cancelled
     is_virtual: bool
     meeting_link: Optional[str] = None
     created_at: datetime

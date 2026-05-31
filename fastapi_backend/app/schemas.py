@@ -7,14 +7,12 @@ from .enums import UserRole
 
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
-    role:UserRole
+    role: UserRole
 
 
 class UserCreate(schemas.BaseUserCreate):
-    role:UserRole
+    role: UserRole
 
 
 class UserUpdate(schemas.BaseUserUpdate):
-    role:UserRole
-
-
+    role: UserRole
