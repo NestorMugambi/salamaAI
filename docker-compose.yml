@@ -1,7 +1,8 @@
 services:
   backend:
     build:
-      context: fastapi_backend
+      context: ./fastapi_backend    # <-- This tells Compose the folder to enter
+      dockerfile: Dockerfile
     environment:
       - OPENAPI_OUTPUT_FILE=./shared-data/openapi.json
       - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/mydatabase
@@ -44,9 +45,11 @@ services:
   
   
   watcher:
-    build: .
+    build:
+      context: ./fastapi_backend    # <-- Fix this too! The watcher uses the same Dockerfile
+      dockerfile: Dockerfile
     container_name: salamaai-watcher
-    command: python /app/watcher.py
+    command: /app/.venv/bin/python /app/watcher.py
     depends_on:
       - backend
   frontend:
