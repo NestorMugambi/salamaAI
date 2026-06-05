@@ -80,7 +80,7 @@ class UserProfileBase(BaseModel):
 
 
 class UserProfileCreate(UserProfileBase):
-    user_id: UUID
+    pass
 
 
 class UserProfileRead(UserProfileBase):

@@ -17,24 +17,10 @@ class UserProfileService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    # -----------------------------
-    # Create PROFILE
-    # -----------------------------
-    async def create_profile(self, profile_data: UserProfileCreate) -> UserProfileRead:
-        # First get the user to ensure it exists
-        user_result = await self.session.execute(
-            select(User).where(User.id == profile_data.user_id)
-        )
-        user = user_result.scalars().first()
-
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-            )
-
-        # Check if the user already has a profile
+    async def create_profile(self, profile_data: UserProfileCreate, user_id: UUID) -> UserProfileRead:
+        # 1. Check if the user already has a profile
         profile_result = await self.session.execute(
-            select(UserProfile).where(UserProfile.user_id == profile_data.user_id)
+            select(UserProfile).where(UserProfile.user_id == user_id)
         )
         existing_profile = profile_result.scalars().first()
 
@@ -44,8 +30,11 @@ class UserProfileService:
                 detail="User already has a profile",
             )
 
-        # Create profile
-        user_profile = UserProfile(**profile_data.model_dump())
+        # 2. Combine the schema fields and the explicit user_id
+        user_profile = UserProfile(
+            **profile_data.model_dump(),
+            user_id=user_id
+        )
         self.session.add(user_profile)
 
         try:
@@ -56,8 +45,11 @@ class UserProfileService:
                 detail="Profile creation failed due to a database constraint",
             )
 
-        # Refresh and explicitly load the user relationship
+        # 3. Refresh and load relationship
         await self.session.refresh(user_profile)
+        
+        # Tip: You can execute this, but ensuring your model_dump/to_read_schema 
+        # handles the lazy-loading strategy smoothly is key.
         await self.session.execute(
             select(UserProfile)
             .options(selectinload(UserProfile.user))

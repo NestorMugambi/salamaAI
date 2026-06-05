@@ -25,16 +25,10 @@ async def create_profile(
 ):
     service = UserProfileService(session)
 
-    # Ensure profile is linked to logged-in user
-    profile.user_id = user.id
-
-    created_profile = await service.create_profile(profile)
-
-    if not created_profile:
-        raise HTTPException(status_code=400, detail="Profile creation failed")
+    # Pass both the schema payload and the active user's ID
+    created_profile = await service.create_profile(profile_data=profile, user_id=user.id)
 
     return created_profile
-
 
 @router.get("/", response_model=UserProfileRead)
 async def get_profile(
