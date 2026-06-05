@@ -34,7 +34,7 @@ from app.database import User
 from app.users import current_active_user
 from .service import (
     create_clinician_profile,
-    get_appointments,
+    get_appointments,    
     get_my_patients,
     get_patient_detail,
     get_prescriptions,
@@ -43,6 +43,7 @@ from .service import (
 from .service import get_my_profile as get_profile_from_db
 from .service import update_appointment as update_appointment_db
 from .service import create_appointment as create_appointment_db
+from . service import search_patients as search_patients_db
 from .schemas import (
     AppointmentCreate,
     AppointmentListResponse,
@@ -158,7 +159,7 @@ async def search_patients(
     session: AsyncSession = Depends(get_async_session),
 ) -> PatientSearchResponse:
     try:
-        return await search_patients(user.id, q, session)
+        return await search_patients_db(user.id, q, session)
     except ValueError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(exc))
 

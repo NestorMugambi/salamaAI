@@ -7,7 +7,7 @@ import re
 from datetime import datetime, timezone
 from app.models import User, UserProfile, RiskAssessmentResult
 from app.clinician_dashboard.schemas import RiskCardSummary, PatientSummary
-from .constants import _DISEASE_META, _RISK_THRESHOLDS
+from .constants import _DISEASE_META
 
 
 def _slug(first: str, last: str, license_number: str) -> str:
@@ -24,34 +24,19 @@ def _overall_label(percent: float) -> str:
     return "High"
 
 
-def _is_high_risk(results: list[RiskAssessmentResult]) -> bool:
-    """True if any disease latest score exceeds its critical threshold."""
-    latest: dict[str, RiskAssessmentResult] = {}
-    for r in results:
-        if r.disease not in latest or r.predicted_at > latest[r.disease].predicted_at:
-            latest[r.disease] = r
-    for disease, r in latest.items():
-        _, high_floor = _RISK_THRESHOLDS.get(disease, (0.30, 0.60))
-        if r.risk_score > high_floor:
-            return True
-    return False
-
-
 def _build_risk_cards(
     results: list[RiskAssessmentResult],
 ) -> tuple[list[RiskCardSummary], float, str]:
-    """Returns (cards, overall_percent, overall_label)."""
+    """Returns (cards, overall_percent, overall_label) driven exclusively by CVD risk."""
     latest: dict[str, RiskAssessmentResult] = {}
     for r in results:
         if r.disease not in latest or r.predicted_at > latest[r.disease].predicted_at:
             latest[r.disease] = r
 
     cards: list[RiskCardSummary] = []
-    scores: list[float] = []
     for disease, meta in _DISEASE_META.items():
         r = latest.get(disease)
         score = round(r.risk_score, 4) if r else 0.0
-        scores.append(score)
         cards.append(
             RiskCardSummary(
                 disease=disease,
@@ -64,7 +49,11 @@ def _build_risk_cards(
             )
         )
 
-    overall_pct = round((sum(scores) / len(scores)) * 100, 1) if scores else 0.0
+    # Directly extract the CVD risk score percentage instead of calculating an average
+    cvd_record = latest.get("cvd")
+    cvd_score = round(cvd_record.risk_score, 4) if cvd_record else 0.0
+    overall_pct = round(cvd_score * 100, 1)
+
     return cards, overall_pct, _overall_label(overall_pct)
 
 
