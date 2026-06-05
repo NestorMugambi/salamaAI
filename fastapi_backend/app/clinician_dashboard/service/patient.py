@@ -16,6 +16,7 @@ from app.models import (
     RiskAssessmentResult,
 )
 from app.clinician_dashboard.schemas import (
+    BloodPressureRead,
     HighRiskPatientResponse,
     PatientSummary,
     PatientDetailResponse,
@@ -131,7 +132,7 @@ async def get_patient_detail(
 
     assessment_schema: HealthAssessmentSummary | None = None
     if latest_assessment:
-        from clinician_dashboard.schemas import BloodPressureRead
+ 
 
         bps = [
             BloodPressureRead(
