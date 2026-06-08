@@ -1,8 +1,39 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Heart, Shield, Clock, Users, Phone, Mail, MapPin, ChevronRight, Activity, Smile, Target } from "lucide-react";
 
 export default function Home() {
+  const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Check if user is logged in on component mount
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    const role = localStorage.getItem("user_role");
+    if (token) {
+      setIsLoggedIn(true);
+      setUserRole(role);
+    }
+  }, []);
+
+  const handleGetStarted = () => {
+    if (isLoggedIn) {
+      // Redirect based on user role
+      if (userRole === "clinician") {
+        router.push("/clinician/dashboard");
+      } else {
+        router.push("/patient/dashboard");
+      }
+    } else {
+      router.push("/login");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-white">
       
@@ -25,11 +56,21 @@ export default function Home() {
           
           {/* Buttons */}
           <div className="flex items-center gap-3">
-            <Link href="/patient/dashboard">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full">
+            {isLoggedIn ? (
+              <Button 
+                onClick={handleGetStarted}
+                className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-full"
+              >
+                Dashboard
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleGetStarted}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full"
+              >
                 Get Started
               </Button>
-            </Link>
+            )}
           </div>
         </div>
       </header>
@@ -54,12 +95,14 @@ export default function Home() {
               No medical jargon. Just clear answers and helpful guidance.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <Link href="/patient/dashboard">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg rounded-2xl shadow-xl shadow-blue-200">
-                  Check Your Risk Free
-                  <ChevronRight className="ml-2 w-5 h-5" />
-                </Button>
-              </Link>
+              <Button 
+                onClick={handleGetStarted}
+                size="lg" 
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg rounded-2xl shadow-xl shadow-blue-200"
+              >
+                {isLoggedIn ? "Go to Dashboard" : "Check Your Risk Free"}
+                <ChevronRight className="ml-2 w-5 h-5" />
+              </Button>
               <Link href="/how-it-works">
                 <Button size="lg" variant="outline" className="border-2 px-8 py-6 text-lg rounded-2xl">
                   How It Works
@@ -165,12 +208,14 @@ export default function Home() {
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
             It's free, it's fast, and it could save your life.
           </p>
-          <Link href="/patient/dashboard">
-            <Button size="lg" className="bg-white text-blue-700 hover:bg-gray-100 px-8 py-6 text-lg rounded-2xl">
-              Start Your Free Check
-              <ChevronRight className="ml-2 w-5 h-5" />
-            </Button>
-          </Link>
+          <Button 
+            onClick={handleGetStarted}
+            size="lg" 
+            className="bg-white text-blue-700 hover:bg-gray-100 px-8 py-6 text-lg rounded-2xl"
+          >
+            {isLoggedIn ? "Go to Dashboard" : "Start Your Free Check"}
+            <ChevronRight className="ml-2 w-5 h-5" />
+          </Button>
         </div>
       </section>
 
