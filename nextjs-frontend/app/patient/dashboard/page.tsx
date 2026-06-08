@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Activity, Plus, TrendingUp, Sliders, Settings, Calendar, Heart, ArrowRight, UserCheck } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { 
+  Activity, Plus, TrendingUp, Sliders, Settings, Calendar, Heart, 
+  ArrowRight, UserCheck, Menu, X, LogOut, History, Home 
+} from 'lucide-react';
 
 interface UserProfile {
   fullName: string;
@@ -9,6 +14,7 @@ interface UserProfile {
 }
 
 interface Assessment {
+  id: string;
   timestamp: string;
   cvdRiskPercentage: number;
   riskCategory: string;
@@ -37,6 +43,7 @@ const mockProfile: UserProfile = {
 // Mock assessments for development
 const mockAssessments: Assessment[] = [
   {
+    id: "1",
     timestamp: "2025-06-01T10:30:00Z",
     cvdRiskPercentage: 32.7,
     riskCategory: "High",
@@ -53,6 +60,7 @@ const mockAssessments: Assessment[] = [
     }
   },
   {
+    id: "2",
     timestamp: "2025-05-15T09:15:00Z",
     cvdRiskPercentage: 28.4,
     riskCategory: "Borderline",
@@ -100,6 +108,8 @@ const mockBpData = [
 ];
 
 export default function PatientDashboard() {
+  const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profile] = useState<UserProfile>(mockProfile);
   const [assessments] = useState<Assessment[]>(mockAssessments);
   const [bpList, setBpList] = useState<any[]>([]);
@@ -109,7 +119,6 @@ export default function PatientDashboard() {
 
   // Fetch BP data (using mock data for development)
   useEffect(() => {
-    // Simulate API call
     setTimeout(() => {
       setBpList(mockBpData);
       setLoadingBp(false);
@@ -194,21 +203,28 @@ export default function PatientDashboard() {
 
   const predictions = getFourDiseasePredictions();
 
-  // Handlers for actions
+  // Navigation Handlers
   const handleNewScan = () => {
-    alert("New cardiovascular scan - This would open the health data form");
+    router.push('/patient/health-measurement');
   };
 
   const handleEditProfile = () => {
-    alert("Edit profile - This would open profile settings");
+    router.push('/patient/profile');
   };
 
   const handleViewAssessment = (assessment: Assessment) => {
-    alert(`Viewing assessment from ${new Date(assessment.timestamp).toLocaleDateString()}`);
+    router.push(`/patient/assessment/${assessment.id}`);
   };
 
   const handleViewHealthData = () => {
-    alert("Health data forms - This would show health data entry forms");
+    router.push('/patient/health-data');
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user_role");
+    localStorage.removeItem("user_email");
+    router.push("/");
   };
 
   // SVG Blood Pressure Plot generator
@@ -387,7 +403,6 @@ export default function PatientDashboard() {
     );
   };
 
-  // Helper for chevron right icon
   const ChevronRightIcon = () => (
     <svg fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" className="h-3 w-3">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -395,180 +410,239 @@ export default function PatientDashboard() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+    <div className="min-h-screen bg-slate-50">
       
-      {/* Welcome banner with action cards */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-stretch justify-between gap-6 border-b border-zinc-200 pb-6">
-        <div className="flex-1 flex flex-col justify-center">
-          <span className="font-mono text-[9px] font-bold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100 self-start">
-            Secure Patient Portal Connected
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 mt-2.5">
-            Welcome back, {profile.fullName}
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-500 mt-1 font-semibold">
-            Salama AI provides multi-disease cardiac predictions. Your email: <strong className="text-zinc-700">{profile.email}</strong>
-          </p>
+      {/* Mobile Sidebar Toggle */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md"
+      >
+        {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+      </button>
+
+      {/* Sidebar */}
+      <aside className={`fixed top-0 left-0 z-40 w-64 h-screen bg-white border-r border-zinc-200 transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}>
+        <div className="p-6">
+          <Link href="/" className="flex items-center gap-2 mb-8">
+            <Heart className="w-6 h-6 text-red-500 fill-red-500" />
+            <span className="text-xl font-bold text-emerald-700">Salama AI</span>
+          </Link>
+          
+          <nav className="space-y-2">
+            <Link href="/patient/dashboard" className="flex items-center gap-3 px-4 py-3 text-slate-700 bg-emerald-50 rounded-lg">
+              <Home className="w-5 h-5 text-emerald-600" />
+              <span>Dashboard</span>
+            </Link>
+            <Link href="/patient/health-data" className="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg">
+              <Activity className="w-5 h-5" />
+              <span>Health Data</span>
+            </Link>
+            <Link href="/patient/appointments" className="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg">
+              <Calendar className="w-5 h-5" />
+              <span>Appointments</span>
+            </Link>
+            <Link href="/patient/history" className="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg">
+              <History className="w-5 h-5" />
+              <span>Risk History</span>
+            </Link>
+          </nav>
         </div>
-
-        {/* Action Cards */}
-        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto md:max-w-xl">
-          <div 
-            onClick={handleNewScan}
-            className="flex-1 rounded-2xl border border-emerald-200 bg-emerald-50/30 p-5 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/60 transition-all shadow-sm"
+        
+        <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-zinc-200">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-lg w-full"
           >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">New Scan</span>
-              <Heart className="h-5 w-5 text-rose-500" />
-            </div>
-            <h3 className="font-extrabold text-sm text-zinc-900 mb-1">Launch Cardiovascular Scan</h3>
-            <p className="text-[10.5px] text-zinc-500 font-semibold mb-4">
-              Input your health data for real-time multi-disease predictions.
-            </p>
-            <button className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 text-xs transition">
-              <Plus className="h-3.5 w-3.5" />
-              <span>Begin New Scan</span>
-            </button>
-          </div>
+            <LogOut className="w-5 h-5" />
+            <span>Logout</span>
+          </button>
+        </div>
+      </aside>
 
-          <div className="flex-1 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-            <div>
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Portals</span>
-              <h3 className="font-extrabold text-sm text-zinc-900 mt-2 mb-1">Clinical Health Sheets</h3>
-              <p className="text-[10.5px] text-zinc-500 font-semibold mb-4">
-                Submit health records to sync diagnostic profiles.
+      {/* Main Content */}
+      <main className="lg:ml-64 p-6">
+        <div className="mx-auto max-w-7xl">
+          
+          {/* Welcome banner */}
+          <div className="mb-8 flex flex-col md:flex-row md:items-stretch justify-between gap-6 border-b border-zinc-200 pb-6">
+            <div className="flex-1 flex flex-col justify-center">
+              <span className="font-mono text-[9px] font-bold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100 self-start">
+                Secure Patient Portal Connected
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 mt-2.5">
+                Welcome back, {profile.fullName}
+              </h1>
+              <p className="text-xs sm:text-sm text-zinc-500 mt-1 font-semibold">
+                Salama AI provides multi-disease cardiac predictions. Your email: <strong className="text-zinc-700">{profile.email}</strong>
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={handleViewHealthData}
-                className="flex items-center justify-center gap-2 border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 py-2.5 rounded-lg text-[10px] font-bold text-zinc-700 transition"
+
+            {/* Action Cards */}
+            <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto md:max-w-xl">
+              <div 
+                onClick={handleNewScan}
+                className="flex-1 rounded-2xl border border-emerald-200 bg-emerald-50/30 p-5 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/60 transition-all shadow-sm"
               >
-                <Activity className="h-3.5 w-3.5 text-emerald-600" />
-                <span>Health Forms</span>
-              </button>
-              <button
-                onClick={handleEditProfile}
-                className="flex items-center justify-center gap-2 border border-emerald-200 bg-emerald-50/40 hover:bg-emerald-50 py-2.5 rounded-lg text-[10px] font-bold text-emerald-700 transition"
-              >
-                <Settings className="h-3.5 w-3.5 text-emerald-600" />
-                <span>Settings</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 4 Disease Risk Cards */}
-      <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {predictions.map((p) => {
-          const detail = diseaseNames[p.disease];
-          const IconComp = detail.icon;
-          return (
-            <div key={p.id} className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-zinc-300 transition">
-              <div className="flex items-center justify-between border-b border-zinc-100 pb-3 mb-3">
-                <div>
-                  <span className="text-[11px] font-bold uppercase text-zinc-800">{detail.title}</span>
-                  <span className="text-[9px] text-zinc-400 block mt-0.5">{detail.desc}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">New Scan</span>
+                  <Heart className="h-5 w-5 text-rose-500" />
                 </div>
-                <IconComp className={`h-5 w-5 ${p.disease === 'cvd' ? 'text-rose-600' : p.disease === 'hyp' ? 'text-amber-600' : p.disease === 'stroke' ? 'text-cyan-600' : 'text-emerald-600'}`} />
-              </div>
-
-              <div className="flex items-baseline justify-between mt-1">
-                <div>
-                  <span className="text-3xl font-extrabold text-zinc-900">
-                    {p.risk_percentage.toFixed(2).replace(/\.00$/, '')}%
-                  </span>
-                  <span className="block text-[8px] text-zinc-400 mt-1">Model: {p.model_version}</span>
-                </div>
-                <span className={`inline-flex rounded-md border px-2 py-0.5 text-[9px] font-extrabold ${getRiskBadgeColor(p.risk_label)}`}>
-                  {p.risk_label}
-                </span>
-              </div>
-
-              {p.explanation && (
-                <p className="mt-3 text-[10.5px] text-zinc-500 font-semibold">
-                  {p.explanation.substring(0, 100)}...
+                <h3 className="font-extrabold text-sm text-zinc-900 mb-1">Launch Cardiovascular Scan</h3>
+                <p className="text-[10.5px] text-zinc-500 font-semibold mb-4">
+                  Input your health data for real-time multi-disease predictions.
                 </p>
-              )}
-
-              <div className="mt-3 pt-3 border-t border-zinc-100 flex justify-between text-[8px] text-zinc-400 font-bold">
-                <span>PREDICTED</span>
-                <span>{new Date(p.predicted_at).toLocaleDateString()}</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Blood Pressure Graph */}
-      <div className="mb-8">
-        {renderBloodPressureGraph()}
-      </div>
-
-      {/* Assessment History and Info */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <div className="lg:col-span-8">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-4 mb-4">
-              <div className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-emerald-600" />
-                <h3 className="font-semibold text-zinc-800 text-sm sm:text-base">Cardiovascular Assessments</h3>
-              </div>
-              <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[10px] font-bold text-zinc-600 border border-zinc-200">
-                {assessments.length} records
-              </span>
-            </div>
-
-            {assessments.length === 0 ? (
-              <div className="py-12 text-center text-sm text-zinc-500">
-                <p>No historical assessments yet.</p>
-                <button onClick={handleNewScan} className="mt-3 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold px-4 py-2 border border-emerald-100">
-                  Create Assessment
+                <button className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 text-xs transition">
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Begin New Scan</span>
                 </button>
               </div>
-            ) : (
-              <div className="divide-y divide-zinc-100">
-                {assessments.map((a, idx) => {
-                  const dateStr = new Date(a.timestamp).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
-                  return (
-                    <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between py-4 gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-zinc-800">Scan on {dateStr}</span>
-                          <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold border ${getRiskBadgeColor(a.riskCategory)}`}>
-                            {a.cvdRiskPercentage}% • {a.riskCategory}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-zinc-500 mt-1">{a.summary}</p>
-                      </div>
-                      <button
-                        onClick={() => handleViewAssessment(a)}
-                        className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[11px] font-bold text-zinc-600 hover:text-emerald-700 hover:bg-emerald-50 transition"
-                      >
-                        <span>View Details</span>
-                        <ChevronRightIcon />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
 
-        <div className="lg:col-span-4">
-          <div className="flex items-start gap-3 rounded-2xl bg-white border border-zinc-200 p-5 shadow-sm">
-            <UserCheck className="h-6 w-6 text-emerald-600 flex-shrink-0" />
-            <div>
-              <span className="block font-bold text-zinc-800 text-sm">Profile Information</span>
-              <p className="text-xs text-zinc-500 mt-2">
-                Your demographic data configures XGBoost baseline predictions for accurate risk assessment.
-              </p>
+              <div className="flex-1 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+                <div>
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Portals</span>
+                  <h3 className="font-extrabold text-sm text-zinc-900 mt-2 mb-1">Clinical Health Sheets</h3>
+                  <p className="text-[10.5px] text-zinc-500 font-semibold mb-4">
+                    Submit health records to sync diagnostic profiles.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={handleViewHealthData}
+                    className="flex items-center justify-center gap-2 border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 py-2.5 rounded-lg text-[10px] font-bold text-zinc-700 transition"
+                  >
+                    <Activity className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>Health Forms</span>
+                  </button>
+                  <button
+                    onClick={handleEditProfile}
+                    className="flex items-center justify-center gap-2 border border-emerald-200 bg-emerald-50/40 hover:bg-emerald-50 py-2.5 rounded-lg text-[10px] font-bold text-emerald-700 transition"
+                  >
+                    <Settings className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>Settings</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 4 Disease Risk Cards */}
+          <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {predictions.map((p) => {
+              const detail = diseaseNames[p.disease];
+              const IconComp = detail.icon;
+              return (
+                <div key={p.id} className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-zinc-300 transition">
+                  <div className="flex items-center justify-between border-b border-zinc-100 pb-3 mb-3">
+                    <div>
+                      <span className="text-[11px] font-bold uppercase text-zinc-800">{detail.title}</span>
+                      <span className="text-[9px] text-zinc-400 block mt-0.5">{detail.desc}</span>
+                    </div>
+                    <IconComp className={`h-5 w-5 ${p.disease === 'cvd' ? 'text-rose-600' : p.disease === 'hyp' ? 'text-amber-600' : p.disease === 'stroke' ? 'text-cyan-600' : 'text-emerald-600'}`} />
+                  </div>
+
+                  <div className="flex items-baseline justify-between mt-1">
+                    <div>
+                      <span className="text-3xl font-extrabold text-zinc-900">
+                        {p.risk_percentage.toFixed(2).replace(/\.00$/, '')}%
+                      </span>
+                      <span className="block text-[8px] text-zinc-400 mt-1">Model: {p.model_version}</span>
+                    </div>
+                    <span className={`inline-flex rounded-md border px-2 py-0.5 text-[9px] font-extrabold ${getRiskBadgeColor(p.risk_label)}`}>
+                      {p.risk_label}
+                    </span>
+                  </div>
+
+                  {p.explanation && (
+                    <p className="mt-3 text-[10.5px] text-zinc-500 font-semibold">
+                      {p.explanation.substring(0, 100)}...
+                    </p>
+                  )}
+
+                  <div className="mt-3 pt-3 border-t border-zinc-100 flex justify-between text-[8px] text-zinc-400 font-bold">
+                    <span>PREDICTED</span>
+                    <span>{new Date(p.predicted_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Blood Pressure Graph */}
+          <div className="mb-8">
+            {renderBloodPressureGraph()}
+          </div>
+
+          {/* Assessment History and Info */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+            <div className="lg:col-span-8">
+              <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+                <div className="flex items-center justify-between border-b border-zinc-100 pb-4 mb-4">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-emerald-600" />
+                    <h3 className="font-semibold text-zinc-800 text-sm sm:text-base">Cardiovascular Assessments</h3>
+                  </div>
+                  <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[10px] font-bold text-zinc-600 border border-zinc-200">
+                    {assessments.length} records
+                  </span>
+                </div>
+
+                {assessments.length === 0 ? (
+                  <div className="py-12 text-center text-sm text-zinc-500">
+                    <p>No historical assessments yet.</p>
+                    <button onClick={handleNewScan} className="mt-3 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold px-4 py-2 border border-emerald-100">
+                      Create Assessment
+                    </button>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-zinc-100">
+                    {assessments.map((a, idx) => {
+                      const dateStr = new Date(a.timestamp).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+                      return (
+                        <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between py-4 gap-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-zinc-800">Scan on {dateStr}</span>
+                              <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold border ${getRiskBadgeColor(a.riskCategory)}`}>
+                                {a.cvdRiskPercentage}% • {a.riskCategory}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-zinc-500 mt-1">{a.summary}</p>
+                          </div>
+                          <button
+                            onClick={() => handleViewAssessment(a)}
+                            className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[11px] font-bold text-zinc-600 hover:text-emerald-700 hover:bg-emerald-50 transition"
+                          >
+                            <span>View Details</span>
+                            <ChevronRightIcon />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="lg:col-span-4">
+              <div className="flex items-start gap-3 rounded-2xl bg-white border border-zinc-200 p-5 shadow-sm">
+                <UserCheck className="h-6 w-6 text-emerald-600 flex-shrink-0" />
+                <div>
+                  <span className="block font-bold text-zinc-800 text-sm">Profile Information</span>
+                  <p className="text-xs text-zinc-500 mt-2">
+                    Your demographic data configures XGBoost baseline predictions for accurate risk assessment.
+                  </p>
+                  <button 
+                    onClick={handleEditProfile}
+                    className="text-xs text-emerald-600 font-semibold mt-2 hover:underline"
+                  >
+                    Edit Profile →
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
