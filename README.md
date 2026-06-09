@@ -1,70 +1,260 @@
-## Next.js FastAPI Template
+# SalamaAI: Explainable Cardiovascular Disease Prediction and Monitoring System
 
-<a href="https://www.vintasoftware.com/blog/next-js-fastapi-template"><img src="docs/images/banner.png" alt="Next.js FastAPI Template" width="auto"></a>
-<p align="center">
-    <em>Next.js FastAPI Template: Python + Modern TypeScript stack with Zod validation.</em>
-</p>
-<p align="center">
-<a href="https://github.com/vintasoftware/nextjs-fastapi-template/actions/workflows/ci.yml" target="_blank">
-    <img src="https://github.com/vintasoftware/nextjs-fastapi-template/actions/workflows/ci.yml/badge.svg" alt="CI">
-</a>
-<a href="https://coveralls.io/github/vintasoftware/nextjs-fastapi-template" target="_blank">
-    <img src="https://coveralls.io/repos/github/vintasoftware/nextjs-fastapi-template/badge.svg" alt="Coverage">
-</a>
-</p>
+## Overview
 
----
+SalamaAI is an AI-powered healthcare decision support system designed to assist in the early detection and monitoring of cardiovascular diseases. The platform leverages Machine Learning (ML) and Explainable Artificial Intelligence (XAI) techniques to provide accurate risk assessments while maintaining transparency and interpretability for healthcare practitioners and patients.
 
-**Documentation**: <a href="https://vintasoftware.github.io/nextjs-fastapi-template/" target="_blank">https://vintasoftware.github.io/nextjs-fastapi-template/</a>
+The current implementation focuses on three major cardiovascular conditions:
 
-**Source Code**: <a href="https://github.com/vintasoftware/nextjs-fastapi-template/" target="_blank">https://github.com/vintasoftware/nextjs-fastapi-template/</a>
+- Coronary Heart Disease (CHD)
+- Cardiovascular Disease (CVD)
+- Stroke
+
+In addition to disease risk prediction, SalamaAI provides blood pressure trend monitoring through graphical visualizations, enabling users and healthcare professionals to track cardiovascular health over time.
 
 ---
 
-The Next.js FastAPI Template provides a solid foundation for scalable, high-performance web applications, following clean architecture and best practices. It simplifies development by integrating FastAPI, Pydantic, and Next.js with TypeScript and Zod, ensuring end-to-end type safety and schema validation between frontend and backend.
+## Problem Statement
 
-The FastAPI backend supports fully asynchronous operations, optimizing database queries, API routes, and test execution for better performance. Deployment is seamless, with both backend and frontend fully deployable to Vercel, enabling quick product releases with minimal configuration.
+Cardiovascular diseases are among the leading causes of death worldwide. Early identification of individuals at risk can significantly improve patient outcomes through timely intervention, preventive care, and lifestyle modification.
 
-### Key features
-✔ End-to-end type safety – Automatically generated typed clients from the OpenAPI schema ensure seamless API contracts between frontend and backend.
+Traditional risk assessment approaches often rely on static clinical evaluations and may not fully leverage the predictive capabilities of modern machine learning techniques. Furthermore, many AI systems operate as "black boxes," making it difficult for healthcare professionals to understand how predictions are generated.
 
-✔ Hot-reload updates – The client updates automatically when backend routes change, keeping FastAPI and Next.js in sync.
+SalamaAI addresses these challenges by combining predictive analytics with Explainable AI (XAI) to provide accurate, transparent, and clinically interpretable risk assessments.
 
-✔ Versatile foundation – Designed for MVPs and production-ready applications, with a pre-configured authentication system and API layer.
+---
 
-✔ Quick deployment – Deploys a full-stack application—including authentication flow and a dashboard—on Vercel in just a few steps.
+## Objectives
 
-✔ Production-ready authentication – Includes a pre-configured authentication system and dashboard interface, allowing you to immediately start development with user management features.
+The primary objectives of SalamaAI are:
 
-## Technology stack
-This template features a carefully selected set of technologies to ensure efficiency, scalability, and ease of use:
+1. To predict the likelihood of Coronary Heart Disease (CHD), Cardiovascular Disease (CVD), and Stroke.
+2. To provide transparent model explanations using Explainable AI techniques.
+3. To monitor blood pressure trends over time for improved cardiovascular health management.
+4. To support healthcare professionals with interpretable risk assessments.
+5. To promote early detection and prevention of cardiovascular diseases.
 
-- Zod + TypeScript – Type safety and schema validation across the stack.
-- fastapi-users – Complete authentication system with:
-    - Secure password hashing
-    - JWT authentication
-- Email-based password recovery
-- shadcn/ui – Prebuilt React components with Tailwind CSS.
-- OpenAPI-fetch – Fully typed client generation from the OpenAPI schema.
-- UV – Simplified dependency management and packaging.
-- Docker Compose – Consistent environments for development and production.
-- Pre-commit hooks – Automated code linting, formatting, and validation before commits.
-- Vercel Deployment – Serverless backend and scalable frontend, deployable with minimal configuration.
+---
 
-This is a partial list of the technologies included in the template. For a complete overview, visit our [Technology selection](https://vintasoftware.github.io/nextjs-fastapi-template/technology-selection/) page.
+## Key Features
 
-## Get Started
+### Disease Risk Prediction
 
-To use this template, visit our [Get Started](https://vintasoftware.github.io/nextjs-fastapi-template/get-started/) and follow the steps.
+SalamaAI predicts the likelihood of:
 
-## Using the template? Let's talk!
+- Coronary Heart Disease (CHD)
+- Cardiovascular Disease (CVD)
+- Stroke
 
-We’re always curious to see how the community builds on top of it and where it’s being used. To collaborate:
+using patient demographic, lifestyle, and clinical information.
 
-- Join the conversation on [GitHub Discussions](https://github.com/vintasoftware/nextjs-fastapi-template/discussions)
-- Report bugs or suggest improvements via [issues](https://github.com/vintasoftware/nextjs-fastapi-template/issues)
-- Check the [Contributing](https://vintasoftware.github.io/nextjs-fastapi-template/contributing/) guide to get involved
+### Explainable Artificial Intelligence (XAI)
 
-This project is maintained by [Vinta Software](https://www.vinta.com.br/) and is actively used in production systems we build for clients. Talk to our expert consultants — get a free technical review: contact@vinta.com.br.
+The system incorporates **SHAP (SHapley Additive exPlanations)** to explain machine learning predictions.
 
-*Disclaimer: This project is not affiliated with Vercel.*
+SHAP explanations enable users to:
+
+- Understand why a prediction was generated.
+- Identify the most influential risk factors.
+- Visualize positive and negative feature contributions.
+- Improve trust and transparency in AI-assisted healthcare decisions.
+
+### Blood Pressure Trend Monitoring
+
+SalamaAI continuously tracks blood pressure readings and presents them through interactive trend graphs.
+
+This functionality enables:
+
+- Longitudinal patient monitoring.
+- Early detection of hypertension patterns.
+- Assessment of treatment effectiveness.
+- Improved patient engagement and self-management.
+
+### Risk Factor Analysis
+
+The platform evaluates multiple cardiovascular risk factors, including:
+
+- Age
+- Blood Pressure
+- Cholesterol Levels
+- Body Mass Index (BMI)
+- Smoking Status
+- Diabetes Indicators
+- Physical Activity Levels
+- Family Medical History
+
+---
+
+## System Workflow
+
+```text
+Patient Data
+      │
+      ▼
+Data Preprocessing
+      │
+      ▼
+Feature Engineering
+      │
+      ▼
+Machine Learning Models
+      │
+      ├── CHD Prediction
+      ├── CVD Prediction
+      └── Stroke Prediction
+      │
+      ▼
+SHAP Explainability Layer
+      │
+      ▼
+Risk Assessment Dashboard
+      │
+      ├── Prediction Results
+      ├── SHAP Explanations
+      └── Blood Pressure Trend Graphs
+```
+
+---
+
+## Machine Learning Pipeline
+
+### Data Preprocessing
+
+The preprocessing stage includes:
+
+- Data Cleaning
+- Missing Value Handling
+- Feature Engineering
+- Feature Selection
+- Data Normalization
+- Categorical Variable Encoding
+
+### Class Imbalance Handling
+
+Medical datasets often contain significantly fewer positive disease cases than negative cases. To address this challenge, SalamaAI employs:
+
+- Synthetic Minority Oversampling Technique (SMOTE)
+
+This helps improve model learning and predictive performance on minority disease classes.
+
+### Model Development
+
+Multiple machine learning algorithms are evaluated, including:
+
+- XGBoost
+- Random Forest
+- Logistic Regression
+- Gradient Boosting
+- Ensemble Learning Models
+
+### Model Evaluation
+
+Performance is assessed using:
+
+- Accuracy
+- Precision
+- Recall
+- F1-Score
+- ROC-AUC Score
+
+Particular emphasis is placed on Recall and F1-Score due to the importance of minimizing false negatives in healthcare applications.
+
+---
+
+## Explainability with SHAP
+
+### Global Explanations
+
+Global explanations provide insights into:
+
+- Overall feature importance.
+- Population-level risk factors.
+- General model behavior.
+
+### Local Explanations
+
+Local explanations provide patient-specific insights by:
+
+- Identifying factors that increase disease risk.
+- Identifying factors that decrease disease risk.
+- Quantifying each feature's contribution to the final prediction.
+
+This improves transparency and supports evidence-based clinical decision-making.
+
+---
+
+## Blood Pressure Trend Analysis
+
+The blood pressure monitoring module records and visualizes:
+
+- Systolic Blood Pressure (SBP)
+- Diastolic Blood Pressure (DBP)
+
+Trend visualization supports:
+
+- Detection of hypertension progression.
+- Identification of abnormal fluctuations.
+- Monitoring treatment effectiveness.
+- Long-term cardiovascular health assessment.
+
+---
+
+## Technology Stack
+
+### Frontend
+
+- Vite
+- JavaScript / TypeScript
+- Tailwind CSS
+
+### Backend
+
+- FastAPI
+- Python
+- PostgreSQL
+
+### Machine Learning & AI
+
+- Scikit-learn
+- XGBoost
+- SHAP
+- Pandas
+- NumPy
+
+### Data Visualization
+
+- Chart.js
+- Recharts
+- SHAP Visualizations
+
+---
+
+## Future Enhancements
+
+Planned improvements include:
+
+- Real-time health monitoring.
+- Wearable device integration.
+- Personalized health recommendations.
+- Advanced cardiovascular risk forecasting.
+- Large Language Model (LLM)-powered health explanations.
+- Clinical decision support systems.
+- Expansion to additional non-communicable diseases.
+
+---
+
+## Expected Impact
+
+SalamaAI aims to contribute to preventive healthcare by:
+
+- Facilitating early disease detection.
+- Improving patient awareness of cardiovascular risks.
+- Enhancing clinician understanding of AI predictions.
+- Supporting data-driven healthcare interventions.
+- Promoting explainable and trustworthy AI in healthcare.
+
+---
+
+## Project Team
+
+SalamaAI is being developed as an AI-driven healthcare research and software engineering project focused on delivering accurate, interpretable, and clinically relevant cardiovascular disease prediction and monitoring solutions.
