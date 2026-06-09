@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
-from typing import Any, Optional
+import json
+from pydantic import BaseModel, Field, computed_field
+from typing import Any, Optional, List, Dict
 from datetime import datetime
 from uuid import UUID
 
@@ -49,6 +50,36 @@ class PredictionResponse(BaseModel):
 
 
 # ─── Stored Result Read Schema ─────────────────────────────────────────────────
+class RiskAssessmentExplainabilityRead(BaseModel):
+    id: UUID
+    risk_assessment_id: UUID
+    recommendation: Optional[str] = None
+    clinical_summary: Optional[str] = None
+    lime_explanation: Optional[str] = None
+    inference_time_ms: Optional[float] = None
+    
+    # Hidden from serialization context so our computed fields can format them nicely
+    top_risk_factors: Optional[str] = Field(None, exclude=True)
+    shap_values: Optional[str] = Field(None, exclude=True)
+
+    model_config = {
+        "from_attributes": True
+    }
+
+    # Automatically unrolls JSON string attributes to native objects in responses
+    @computed_field
+    def parsed_top_risk_factors(self) -> List[Dict[str, Any]]:
+        try:
+            return json.loads(self.top_risk_factors) if self.top_risk_factors else []
+        except Exception:
+            return []
+
+    @computed_field
+    def parsed_shap_values(self) -> Dict[str, float]:
+        try:
+            return json.loads(self.shap_values) if self.shap_values else {}
+        except Exception:
+            return {}
 
 
 class RiskAssessmentResultRead(BaseModel):
@@ -60,6 +91,10 @@ class RiskAssessmentResultRead(BaseModel):
     risk_label: str
     model_version: str
     predicted_at: datetime
+    
+    # 1:1 Embedded Nested Model Execution Context mapping
+    explainability: Optional[RiskAssessmentExplainabilityRead] = None
 
-    class Config:
-        from_attributes = True
+    model_config = {
+        "from_attributes": True
+    }

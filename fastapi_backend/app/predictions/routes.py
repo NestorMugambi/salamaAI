@@ -17,11 +17,12 @@ from .schemas import (
     PredictionRequest,
     PredictionResponse,
     RiskAssessmentResultRead,
+    RiskAssessmentExplainabilityRead,  # <-- Added new schema import
 )
 
 # Clean explicit sub-module imports matching the new structure
 from .service import run_predictions
-from .queries import get_latest_results
+from .queries import get_latest_results, fetch_explainability_by_result  # <-- Added fetch query
 from .diagnostics import run_system_diagnostic
 
 router = APIRouter(prefix="/predictions", tags=["Predictions"])
@@ -85,6 +86,34 @@ async def prediction_history(
     # Route now calls queries sub-module directly for data extraction
     records = await get_latest_results(user_id=user.id, session=session)
     return [RiskAssessmentResultRead.model_validate(r) for r in records]
+
+
+@router.get(
+    "/explain/{risk_assessment_id}",
+    response_model=RiskAssessmentExplainabilityRead,
+    status_code=status.HTTP_200_OK,
+    summary="Retrieve SHAP values, top risk factors, and clinical explanations for a specific prediction",
+)
+async def get_prediction_explainability(
+    risk_assessment_id: UUID,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+) -> RiskAssessmentExplainabilityRead:
+    """
+    Fetches the TreeSHAP feature contributions, custom clinic recommendations, 
+    and profiling metadata linked directly to a historical inference instance.
+    """
+    explanation = await fetch_explainability_by_result(
+        risk_assessment_id=risk_assessment_id, session=session
+    )
+    
+    if not explanation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Explainability parameters not found for record ID: {risk_assessment_id}",
+        )
+        
+    return RiskAssessmentExplainabilityRead.model_validate(explanation)
 
 
 @router.get(

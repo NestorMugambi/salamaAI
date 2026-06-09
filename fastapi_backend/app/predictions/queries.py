@@ -2,8 +2,8 @@
 from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-from app.models import RiskAssessmentResult, UserProfile, HealthAssessment
+from sqlalchemy.orm import selectinload, joinedload
+from app.models import RiskAssessmentExplainability, RiskAssessmentResult, UserProfile, HealthAssessment
 
 
 async def fetch_user_profile(
@@ -31,13 +31,28 @@ async def fetch_latest_assessment(
     return result.scalar_one_or_none()
 
 
-async def get_latest_results(
-    user_id: UUID,
-    session: AsyncSession,
-) -> list[RiskAssessmentResult]:
-    rows = await session.execute(
+async def get_latest_results(user_id: UUID, session: AsyncSession) -> list[RiskAssessmentResult]:
+    """
+    Fetches the history of risk assessments for a specific user,
+    eagerly loading the linked explainability records in a single query execution.
+    """
+    stmt = (
         select(RiskAssessmentResult)
         .where(RiskAssessmentResult.user_id == user_id)
+        .options(joinedload(RiskAssessmentResult.explainability)) # <-- Eager load the relationship
         .order_by(RiskAssessmentResult.predicted_at.desc())
     )
-    return list(rows.scalars().all())
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
+
+async def fetch_explainability_by_result(
+    risk_assessment_id: UUID, session: AsyncSession
+) -> RiskAssessmentExplainability | None:
+    """
+    Retrieves the SHAP explainability record tied to a specific prediction result ID.
+    """
+    stmt = select(RiskAssessmentExplainability).where(
+        RiskAssessmentExplainability.risk_assessment_id == risk_assessment_id
+    )
+    result = await session.execute(stmt)
+    return result.scalar_one_or_none()
