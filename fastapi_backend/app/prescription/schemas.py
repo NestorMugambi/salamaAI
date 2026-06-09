@@ -1,45 +1,37 @@
-from app.enums import AdministrationRoute, TimeUnit
-
-from pydantic import BaseModel, Field
-from typing import Optional, List
+from datetime import datetime
+from typing import Optional
 from uuid import UUID
+from pydantic import BaseModel, ConfigDict, Field
+from app.enums import PrescriptionStatus  # Ensure this is imported from your enums file
 
 
 # Base Schema (Shared fields)
-class DoseScheduleBase(BaseModel):
-    dose_duration_value: Optional[float] = None
-    dose_duration_unit: Optional[TimeUnit] = None
-    dose_administration_duration_value: Optional[float] = None
-    dose_administration_duration_unit: Optional[TimeUnit] = None
-    dose_value: Optional[float] = None
-    dose_unit: Optional[str] = None
-    dose_min_value: Optional[float] = None
-    dose_max_value: Optional[float] = None
-    frequency: Optional[str] = None
-    dose_prn_trigger: Optional[str] = None
-
-
 class PrescriptionBase(BaseModel):
-    medication_name: str
-    route: AdministrationRoute
-    prescription_trigger: Optional[str] = None
+    medication_name: str = Field(..., max_length=255)
+    dosage: str = Field(..., max_length=100)
+    frequency: str = Field(..., max_length=100)
+    duration: Optional[str] = Field(None, max_length=100)
+    instructions: Optional[str] = None
+    refills: int = Field(default=0, ge=0)
 
 
-# Create Schema (For POST requests)
-class DoseScheduleCreate(DoseScheduleBase):
-    pass
-
-
+# Create Schema (For POST requests if patients can self-report, or for general input)
 class PrescriptionCreate(PrescriptionBase):
-    schedules: List[DoseScheduleCreate] = Field(default_factory=list)
+    patient_id: UUID
+    clinician_profile_id: UUID
+    status: PrescriptionStatus = PrescriptionStatus.ACTIVE
+    expires_at: Optional[datetime] = None
 
 
-# Read Schema (For GET responses)
-class DoseScheduleRead(DoseScheduleBase):
-    id: int
-
-
+# Read Schema (For GET responses - Patient facing)
 class PrescriptionRead(PrescriptionBase):
-    id: int
-    user_id: UUID
-    schedules: List[DoseScheduleRead]
+    id: UUID
+    patient_id: UUID
+    clinician_profile_id: UUID
+    status: PrescriptionStatus
+    issued_at: datetime
+    expires_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    # Enable Pydantic to read directly from SQLAlchemy models
+    model_config = ConfigDict(from_attributes=True)

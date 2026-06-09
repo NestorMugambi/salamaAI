@@ -177,3 +177,9 @@ class UserRole(str, Enum):
     PATIENT = "patient"
     CLINICIAN = "clinician"
     ADMIN = "admin"
+
+class PrescriptionStatus(str, Enum):
+    ACTIVE    = "active"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    EXPIRED   = "expired"

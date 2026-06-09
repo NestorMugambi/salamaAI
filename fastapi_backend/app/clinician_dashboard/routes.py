@@ -44,6 +44,7 @@ from .service import get_my_profile as get_profile_from_db
 from .service import update_appointment as update_appointment_db
 from .service import create_appointment as create_appointment_db
 from . service import search_patients as search_patients_db
+from .service import assign_prescription as assign_prescription_db
 from .schemas import (
     AppointmentCreate,
     AppointmentListResponse,
@@ -269,7 +270,7 @@ async def assign_prescription(
     session: AsyncSession = Depends(get_async_session),
 ) -> PrescriptionRead:
     try:
-        return await assign_prescription(user.id, data, session)
+        return await assign_prescription_db(user.id, data, session)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(exc))
 

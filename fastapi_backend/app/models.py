@@ -24,6 +24,7 @@ from .enums import (
     BpMedication,
     ClinicianPatientStatus,
     DescriptiveStatistic,
+    PrescriptionStatus,
     TemporalRelationship,
     TemporalRelationshipToSleep,
     BodyPosture,
@@ -75,7 +76,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
 
     prescriptions = relationship(
         "Prescription",
-        back_populates="user",
+        back_populates="patient",
         cascade="all, delete-orphan",
     )
 
@@ -212,6 +213,11 @@ class ClinicianProfile(Base):
     )
     patients = relationship(
         "ClinicianPatient",
+        back_populates="clinician_profile",
+        cascade="all, delete-orphan",
+    )
+    prescriptions = relationship(
+        "Prescription",
         back_populates="clinician_profile",
         cascade="all, delete-orphan",
     )
@@ -738,100 +744,107 @@ class HeartRate(Base):
 # Prescription
 # =========================================================
 class Prescription(Base):
-    __tablename__ = "prescription"
-
-    id = Column(Integer, primary_key=True)
-
-    user_id = Column(
+    __tablename__ = "prescriptions"
+ 
+    id = Column(
         PG_UUID(as_uuid=True),
-        ForeignKey("user.id"),
-        nullable=False,
+        primary_key=True,
+        default=uuid4,
+        unique=True,
     )
-
-    medication_name = Column(
-        String,
-        nullable=False,
-    )
-
-    route = Column(
-        Enum(AdministrationRoute),
-        nullable=False,
-    )
-
-    prescription_trigger = Column(
-        String,
-        nullable=True,
-    )
-
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-    )
-
+ 
     # -------------------------
     # Relationships
     # -------------------------
-    user = relationship(
+    patient_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("user.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+ 
+    clinician_profile_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("clinician_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+ 
+    # -------------------------
+    # Medication Details
+    # -------------------------
+    medication_name = Column(
+        String(255),
+        nullable=False,
+    )
+ 
+    dosage = Column(
+        String(100),
+        nullable=False,
+    )
+ 
+    frequency = Column(
+        String(100),
+        nullable=False,
+    )
+ 
+    duration = Column(
+        String(100),
+        nullable=True,
+    )
+ 
+    instructions = Column(
+        Text,
+        nullable=True,
+    )
+ 
+    refills = Column(
+        Integer,
+        nullable=False,
+        default=0,
+    )
+ 
+    # -------------------------
+    # Status
+    # -------------------------
+    status = Column(
+        Enum(PrescriptionStatus, name="prescription_status"),
+        nullable=False,
+        default=PrescriptionStatus.ACTIVE,
+    )
+ 
+    # -------------------------
+    # Timestamps
+    # -------------------------
+    issued_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+ 
+    expires_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+ 
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+ 
+    # -------------------------
+    # Relationships
+    # -------------------------
+    patient = relationship(
         "User",
         back_populates="prescriptions",
     )
-
-    schedules = relationship(
-        "DoseSchedule",
-        back_populates="prescription",
-        cascade="all, delete-orphan",
+ 
+    clinician_profile = relationship(
+        "ClinicianProfile",
+        back_populates="prescriptions",
     )
-
-
-# =========================================================
-# Dose Schedule
-# =========================================================
-class DoseSchedule(Base):
-    __tablename__ = "dose_schedule"
-
-    id = Column(Integer, primary_key=True)
-
-    prescription_id = Column(
-        Integer,
-        ForeignKey("prescription.id"),
-        nullable=False,
-    )
-
-    dose_duration_value = Column(Float, nullable=True)
-
-    dose_duration_unit = Column(String, nullable=True)
-
-    dose_administration_duration_value = Column(
-        Float,
-        nullable=True,
-    )
-
-    dose_administration_duration_unit = Column(
-        String,
-        nullable=True,
-    )
-
-    dose_value = Column(Float, nullable=True)
-
-    dose_unit = Column(String, nullable=True)
-
-    dose_min_value = Column(Float, nullable=True)
-
-    dose_max_value = Column(Float, nullable=True)
-
-    frequency = Column(String, nullable=True)
-
-    dose_prn_trigger = Column(String, nullable=True)
-
-    # -------------------------
-    # Relationships
-    # -------------------------
-    prescription = relationship(
-        "Prescription",
-        back_populates="schedules",
-    )
-
-
 # =========================================================
 # Risk Assessment Result
 # Stores prediction outputs from ML models

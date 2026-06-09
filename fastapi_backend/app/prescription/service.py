@@ -1,10 +1,10 @@
+from typing import List, Optional
+from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
-from typing import List, Optional
-from app.models import Prescription, DoseSchedule
 
-from .schemas import PrescriptionCreate, PrescriptionRead, DoseScheduleRead
+from app.models import Prescription
+from .schemas import PrescriptionCreate, PrescriptionRead
 
 
 class PrescriptionService:
@@ -12,100 +12,49 @@ class PrescriptionService:
         self.session = session
 
     async def create_prescription(
-        self, user_id: str, data: PrescriptionCreate
+        self, patient_id: UUID, data: PrescriptionCreate
     ) -> PrescriptionRead:
-        """Create a new prescription with dose schedules."""
-        # Create prescription without committing yet
-        prescription = Prescription(
-            user_id=user_id,
-            medication_name=data.medication_name,
-            route=data.route,
-            prescription_trigger=data.prescription_trigger,
-        )
+        """Create a new flattened prescription."""
+        # Dump model data to clean dictionary matching the DB column fields
+        prescription_data = data.model_dump()
+        
+        # Override or ensure patient_id is mapped correctly from context
+        prescription_data["patient_id"] = patient_id
 
-        # Add dose schedules
-        for schedule_data in data.schedules:
-            schedule = DoseSchedule(**schedule_data.model_dump())
-            prescription.schedules.append(schedule)
+        prescription = Prescription(**prescription_data)
 
         self.session.add(prescription)
-        await self.session.flush()  # Generate IDs but don't commit
-
-        # Refresh to load relationships
-        await self.session.refresh(prescription)
-
-        # Explicitly load schedule relationship
-        result = await self.session.execute(
-            select(Prescription)
-            .options(selectinload(Prescription.schedules))
-            .where(Prescription.id == prescription.id)
-        )
-        full_prescription = result.scalar_one()
-
+        await self.session.flush()  # Generate ID and timestamps without committing yet
         await self.session.commit()
 
-        # Convert to Pydantic model
-        return PrescriptionRead(
-            id=full_prescription.id,
-            user_id=full_prescription.user_id,
-            medication_name=full_prescription.medication_name,
-            route=full_prescription.route,
-            prescription_trigger=full_prescription.prescription_trigger,
-            schedules=[
-                DoseScheduleRead(**schedule.__dict__)
-                for schedule in full_prescription.schedules
-            ],
-        )
+        # Leverage Pydantic v2 from_attributes parsing
+        return PrescriptionRead.model_validate(prescription)
 
     async def get_prescription(
-        self, prescription_id: int, user_id: str
+        self, prescription_id: UUID, patient_id: UUID
     ) -> Optional[PrescriptionRead]:
-        """Fetch a single prescription with its schedule."""
+        """Fetch a single flattened prescription."""
         result = await self.session.execute(
             select(Prescription)
-            .options(selectinload(Prescription.schedule))  # Eager load schedule
             .where(Prescription.id == prescription_id)
-            .where(Prescription.user_id == user_id)
+            .where(Prescription.patient_id == patient_id)
         )
         prescription = result.scalar_one_or_none()
 
         if not prescription:
             return None
 
-        return PrescriptionRead(
-            id=prescription.id,
-            user_id=prescription.user_id,
-            medication_name=prescription.medication_name,
-            route=prescription.route,
-            prescription_trigger=prescription.prescription_trigger,
-            schedules=[
-                DoseScheduleRead(**schedule.__dict__)
-                for schedule in prescription.schedules
-            ],
-        )
+        return PrescriptionRead.model_validate(prescription)
 
     async def get_user_prescriptions(
-        self, user_id: str, limit: int = 100
+        self, patient_id: UUID, limit: int = 100
     ) -> List[PrescriptionRead]:
-        """Fetch all prescriptions for a user with their schedules."""
+        """Fetch all prescriptions for a patient."""
         result = await self.session.execute(
             select(Prescription)
-            .options(selectinload(Prescription.schedules))  # Eager load schedule
-            .where(Prescription.user_id == user_id)
+            .where(Prescription.patient_id == patient_id)
             .limit(limit)
         )
         prescriptions = result.scalars().all()
 
-        return [
-            PrescriptionRead(
-                id=p.id,
-                user_id=p.user_id,
-                medication_name=p.medication_name,
-                route=p.route,
-                prescription_trigger=p.prescription_trigger,
-                schedules=[
-                    DoseScheduleRead(**schedule.__dict__) for schedule in p.schedules
-                ],
-            )
-            for p in prescriptions
-        ]
+        return [PrescriptionRead.model_validate(p) for p in prescriptions]
